@@ -60,23 +60,9 @@ characterRouter
         userId,
         characterId,
         role,
-        attributes = {
-            control,
-            fitness,
-            presense,
-            daring,
-            insight,
-            reason
-        },
+        attributes,
         species,
-        disciplines = {
-            command,
-            security,
-            science,
-            conn,
-            engineering,
-            medicine
-        },
+        disciplines,
         value,
         equipment
         };

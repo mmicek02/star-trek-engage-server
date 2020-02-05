@@ -6,12 +6,22 @@ const helmet = require('helmet')
 const { NODE_ENV } = require('./config')
 const uuid = require('uuid/v4');
 const characterRouter = require('./characters/characters-router')
+require('dotenv').config()
+const knex = require('knex')
 
 const app = express()
 
 const morganOption = (NODE_ENV === 'production')
   ? 'tiny'
   : 'common';
+
+
+const knexIntance = knex({
+    client: 'pg',
+    connection: process.env.DB_URL,
+})
+
+console.log('knex and driver installed correctly')
 
 app.use(morgan(morganOption))
 app.use(helmet())
