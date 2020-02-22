@@ -3,24 +3,14 @@ const characters = [
     {
         "userId": "0001",
         "characterId": "0001001",
-        "role": "Operations Officer",
-        "attributes": {
-            "control": 10,
-            "fitness": 10,
-            "presense": 9,
-            "daring": 9,
-            "insight": 8,
-            "reason": 7
-        },
+        "role": "edical Officer",
+        "attributes": [
+            10,12, 9, 11, 8, 7
+        ],
         "species": "Human",
-        "disciplines": {
-            "command": 3,
-            "security": 2,
-            "science": 5,
-            "conn": 2,
-            "engineering": 1,
-            "medicine": 3
-        },
+        "disciplines": [
+            3, 2, 5, 2, 1, 3
+        ],
         "value": "Smart",
         "equipment": "Tricorder and Phaser"
     },
@@ -28,24 +18,15 @@ const characters = [
         "userId": "0002",
         "characterId": "0002001",
         "role": "Medical Officer",
-        "attributes": {
-            "control": 10,
-            "fitness": 10,
-            "presense": 9,
-            "daring": 9,
-            "insight": 8,
-            "reason": 7
-        },
+        "attributes": [
+            12,10, 9, 11, 8, 7
+        ],
         "species": "Trill",
-        "disciplines": {
-            "command": 3,
-            "security": 2,
-            "science": 5,
-            "conn": 2,
-            "engineering": 1,
-            "medicine": 3
-        },
+        "disciplines": [
+            3, 2, 5, 2, 1, 3
+        ],
         "value": "Smart",
         "equipment": "Tricorder and Phaser"
     }
 ];
+module.exports = characters;

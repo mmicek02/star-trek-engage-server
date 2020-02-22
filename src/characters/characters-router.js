@@ -1,114 +1,108 @@
-const express = require('express')
-const uuid = require('uuid/v4')
-const logger = require('../logger')
-const { characters } = require('../store')
+const express = require('express');
+const uuid = require('uuid/v4');
+const logger = require('../logger');
+const CharacterService = require('./character-service');
+const xss = require('xss');
+const { characters } = require('../store');
 
 const characterRouter = express.Router()
-const bodyParser = express.json()
+const jsonParser = express.json()
+
+const serializeCharacter = character => ({
+    id: character.id,
+    role: character.role,
+    species: character.species,
+    value: character.value,
+    name: character.name,
+    userId: character.userId
+})
 
 characterRouter
-    .route('/characters')
-    .get((req, res) => {
-        res.json(characters);
-    })
-
-characterRouter
-    .route('/characters/add-character')
-    .post(bodyParser, (req, res) => {
-        // create a new character
-        const {userId, characterId, role, attributes, species, disciplines, value, name=false} = req.body;
-        console.log(req.body)
-        if (!characterId) {
-            logger.error(`Character ID required`);
-            return res
-            .status(400)
-            .send('CharacterId required');
-        }
-        if (!role) {
-            logger.error(`Role required`);
-            return res
-            .status(400)
-            .send('Role required');
-        }
-        if (!attributes) {
-            logger.error(`Attributes required`);
-            return res
-            .status(400)
-            .send('Attributes required');
-        }
-        if (!species) {
-            logger.error(`Species required`);
-            return res
-            .status(400)
-            .send('Species required');
-        }
-        if (!disciplines) {
-            logger.error(`Disciplines required`);
-            return res
-            .status(400)
-            .send('Disciplines required');
-        }
-        if (!value) {
-            logger.error(`value required`);
-            return res
-            .status(400)
-            .send('value required');
-        }
-
-        const id = uuid();
-        const newCharacter = {        
-        userId,
-        characterId,
-        role,
-        attributes,
-        species,
-        disciplines,
-        value,
-        equipment
-        };
-
-    characters.push(newCharacter);
-
-    logger.info(`Character with id ${id} created`)
-
-    res
-        .status(204)
-        .location(`http://localhost:8000/${id}`)
-        .send('All validation passed')
-        .end();
+    .route('/')
+    .get((req, res, next) => {
+        CharacterService.getAllCharacters(
+            req.app.get('db')
+        )
+        .then(characters => {
+            res.json(characters.map(serializeCharacter))
         })
+        .catch(next) 
+    })
+    .post(jsonParser, (req, res, next) => {
+        const { role, species, value, name, userId } = req.body;
+        const newCharacter = { role, species, value, name, userId };
+        for (const [key, value] of Object.entries(newCharacter)) {
+            if (value == null) {
+                return res.status(400).json({
+                    error: { message: `Missing ${key} is request body`}
+                })
+            }
+        }
+        CharacterService.insertCharacter(
+            req.app.get('db'),
+            newCharacter
+        )
+        .then(character => {
+            res
+                .status(201)
+                .location(req.originalUrl + `/${character.id}`)
+                .json(serializeCharacter(character))
+        })
+        .catch(next)
+    })
 
 characterRouter
-    .route('/characters/:characterId')
-    .get((req, res) => {
-        const { characterId } = req.params;
-        const character = characters.find(c => c.characterId == characterId);
-    
-        //Make sure we find the character
-        if (!character) {
-            logger.error(`Character with id ${characterId} not found.`);
-            return res
-                .status(404)
-                .send('Character Not Found');
-        }
-    
-        res.json(character)
+    .route('/:characterId')
+    .all((req, res, next) => {
+        CharacterService.getById(
+            req.app.get('db'),
+            req.params.characterId
+        )
+        .then(character => {
+            //Make sure we find the character
+            if (!character) {
+                logger.error(`Character with id ${characterId} not found.`);
+                return res.status(404).json({
+                    error: { error: `Character does not exsist.`}
+                })
+            }  
+            res.character = character;
+            next()
+        })
+        .catch(next)
     })
-    .delete((req, res) => {
-        const { characterId } = req.params;
-
-        const index = characters.findIndex(c = c.id === characterId);
-    
-        if (index === -1) {
-            return res
-                .status(404)
-                .send('User not found');
+    .get((req, res, next) => {
+        res.json(serializeCharacter(res.character));
+    })
+    .delete((req, res, next) => {
+        CharacterService.deleteCharacter(
+            req.app.get('db'),
+            req.params.characterId
+        )
+        .then(() => {
+            res.status(204).end()
+        })
+        .catch(next)
+    })
+    .patch(jsonParser, (req, res, next) => {
+        const { role, species, value, name, userId } = req.body;
+        const updateCharacter = { role, species, value, name, userId };
+        for (const [key, value] of Object.entries(updateCharacter)) {
+            if(value == null) {
+                return res.status(400).json({
+                    error: { message: `Missing '${key}' in request body`}
+                })
+            }
         }
-        characters.splice(index, 1);
-    
-        res
-            .status(204)
-            .end();
+        CharacterService.updateCharacter(
+            req.app.get('db'),
+            req.params.characterId,
+            updateCharacter
+        )
+        .then(numRowsAffected => {
+            res.status(204).end()
+        })
+        .catch(next)
     })
 
-module.exports = characterRouter
+module.exports = characterRouter;
