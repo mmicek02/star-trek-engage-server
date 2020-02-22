@@ -9,12 +9,14 @@ const characterRouter = express.Router()
 const jsonParser = express.json()
 
 const serializeCharacter = character => ({
-    id: character.id,
-    role: character.role,
+    characterid: character.characterid,
+    userId: character.userId,
+    characterRole: character.characterRole,
+    characterName: character.characterName,
     species: character.species,
-    value: character.value,
-    name: character.name,
-    userId: character.userId
+    attributes: character.attributes,
+    disciplines: character.disciplines,
+    characterValue: character.characterValue
 })
 
 characterRouter
@@ -29,8 +31,8 @@ characterRouter
         .catch(next) 
     })
     .post(jsonParser, (req, res, next) => {
-        const { role, species, value, name, userId } = req.body;
-        const newCharacter = { role, species, value, name, userId };
+        const { characterid, userId, characterRole, characterName, species, attributes, disciplines, characterValue } = req.body;
+        const newCharacter = { characterid, userId, characterRole, characterName, species, attributes, disciplines, characterValue };
         for (const [key, value] of Object.entries(newCharacter)) {
             if (value == null) {
                 return res.status(400).json({
@@ -45,7 +47,7 @@ characterRouter
         .then(character => {
             res
                 .status(201)
-                .location(req.originalUrl + `/${character.id}`)
+                .location(req.originalUrl + `/${character.characterid}`)
                 .json(serializeCharacter(character))
         })
         .catch(next)
@@ -56,12 +58,12 @@ characterRouter
     .all((req, res, next) => {
         CharacterService.getById(
             req.app.get('db'),
-            req.params.characterId
+            req.params.characterid
         )
         .then(character => {
             //Make sure we find the character
             if (!character) {
-                logger.error(`Character with id ${characterId} not found.`);
+                logger.error(`Character with id ${characterid} not found.`);
                 return res.status(404).json({
                     error: { error: `Character does not exsist.`}
                 })
@@ -85,8 +87,8 @@ characterRouter
         .catch(next)
     })
     .patch(jsonParser, (req, res, next) => {
-        const { role, species, value, name, userId } = req.body;
-        const updateCharacter = { role, species, value, name, userId };
+        const { characterid, userId, characterRole, characterName, species, attributes, disciplines, characterValue } = req.body;
+        const updateCharacter = { characterid, userId, characterRole, characterName, species, attributes, disciplines, characterValue };
         for (const [key, value] of Object.entries(updateCharacter)) {
             if(value == null) {
                 return res.status(400).json({
@@ -96,7 +98,7 @@ characterRouter
         }
         CharacterService.updateCharacter(
             req.app.get('db'),
-            req.params.characterId,
+            req.params.characterid,
             updateCharacter
         )
         .then(numRowsAffected => {

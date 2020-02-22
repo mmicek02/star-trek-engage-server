@@ -1,20 +1,23 @@
-function makeUsersArray() {
+function makeUserArray() {
     return [
         {
-            id: 1,
-            name: "Mike"
+            userid: 1,
+            username: "Mike",
+            userpassword: "password"
         },
         {
-            id: 2,
-            name: "Larry"
+            userid: 2,
+            username: "Larry",
+            userpassword: "password"
         },
         {
-            id: 3,
-            name: "Ty"
+            userid: 3,
+            username: "Ty",
+            userpassword: "hidden"
         }
     ]
 }
 
 module.exports = {
-    makeUsersArray
+    makeUserArray
 };

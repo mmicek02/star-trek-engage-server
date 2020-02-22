@@ -16,7 +16,7 @@ describe(`Character endpoints`, () => {
 
     after('disconnect from database', () => db.destroy())
 
-    before('clean the table', () => db.raw('TRUNCATE users, characters RESTART INDENTITY CASCADE'))
+    before('clean the table', () => db.raw('TRUNCATE users, characters RESTART IDENTITY CASCADE'))
 
     afterEach('cleanup',()=> db.raw('TRUNCATE users, characters RESTART IDENTITY CASCADE'))
 
