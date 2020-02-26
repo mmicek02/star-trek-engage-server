@@ -1,8 +1,8 @@
 function makeCharacterArray() {
     return [
         {
-            characterId: 1,
-            userId: 1,
+            characterid: 1,
+            userid: 1,
             characterRole: 'Chief Engineer',
             characterName: 'Captain Ty',
             species: 'human',
@@ -33,7 +33,7 @@ function makeCharacterArray() {
 
 function makeMaliciousCharacter() {
     const maliciousCharacter = {
-        characterId: 911,
+        characterId: 1,
         userId: 1,
         characterRole: '<script>alert("xss");</script>',
         characterName: 'Captain Ty',
@@ -47,7 +47,7 @@ function makeMaliciousCharacter() {
         characterValue: 'Pretty'
     }
     const expectedCharacter = {
-        characterId: 911,
+        characterId: 1,
         user_id: 1,
         characterRole: '&lt;script&gt;alert(\"xss\");&lt;/script&gt;',
         characterName: 'Captain Ty',

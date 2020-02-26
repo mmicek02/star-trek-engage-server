@@ -1,6 +1,5 @@
 const express = require('express');
 const uuid = require('uuid/v4');
-const logger = require('../logger');
 const CharacterService = require('./character-service');
 const xss = require('xss');
 const { characters } = require('../store');
@@ -63,7 +62,6 @@ characterRouter
         .then(character => {
             //Make sure we find the character
             if (!character) {
-                logger.error(`Character with id ${characterid} not found.`);
                 return res.status(404).json({
                     error: { error: `Character does not exsist.`}
                 })

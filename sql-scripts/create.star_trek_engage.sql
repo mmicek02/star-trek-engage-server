@@ -4,8 +4,8 @@ CREATE TABLE IF NOT EXISTS characters (
     characterRole TEXT NOT NULL,
     characterName TEXT,
     species TEXT NOT NULL,
-    attributes INTEGER NOT NULL,
-    disciplines INTEGER NOT NULL,
+    attributes TEXT NOT NULL,
+    disciplines TEXT NOT NULL,
     characterValue TEXT,
     equipment TEXT
 );
