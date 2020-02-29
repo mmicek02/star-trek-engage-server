@@ -135,9 +135,11 @@ let db
             it(`responds with 404`, () => {
                 const characterId = 123456
                 return supertest(app)
-                    .get(`/character/${characterId}`)
+                    .get(`/api/characters/${characterId}`)
                     .expect(404, {
-                        error: { message: `Character does not exist` }
+                        error: { 
+                            message: `Character does not exist` 
+                        }
                     })
             })
         })

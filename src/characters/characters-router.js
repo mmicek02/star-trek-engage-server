@@ -63,7 +63,9 @@ characterRouter
             .then(character => {
                 if (!character) {
                     return res.status(404).json({
-                        error: { message: `Character does not exist` }
+                        error: { 
+                            message: `Character does not exist` 
+                        }
                     })
                 }
                 res.character = character // save the character for the next middleware
