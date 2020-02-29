@@ -1,7 +1,6 @@
 const express = require('express');
-const uuid = require('uuid/v4');
-const CharacterService = require('./character-service');
 const xss = require('xss');
+const CharacterService = require('./character-service');
 
 const characterRouter = express.Router()
 const jsonParser = express.json()
@@ -14,7 +13,8 @@ const serializeCharacter = character => ({
     species: character.species,
     attributes: character.attributes,
     disciplines: character.disciplines,
-    charactervalue: character.charactervalue
+    charactervalue: character.charactervalue,
+    equipment: character.equipment,
 })
 
 characterRouter
@@ -23,34 +23,33 @@ characterRouter
         const knexIntance = req.app.get('db')
         CharacterService.getAllCharacters(knexIntance)
             .then(characters => {
-                res.json(characters)
+                res.json(characters.map(serializeCharacter))
             })
-        .then(characters => {
-            res.json(characters.map(serializeCharacter))
-        })
-        .catch(next) 
+            .catch(next) 
     })
     .post(jsonParser, (req, res, next) => {
-        const { characterid, userid, characterrole, charactername, species, attributes, disciplines, charactervalue } = req.body;
-        const newCharacter = { characterid, userid, characterrole, charactername, species, attributes, disciplines, charactervalue };
+        const { userid, characterrole, charactername, species, attributes, disciplines, charactervalue, equipment } = req.body;
+        const newCharacter = { userid, characterrole, charactername, species, attributes, disciplines, charactervalue, equipment };
+        
         for (const [key, value] of Object.entries(newCharacter)) {
             if (value == null) {
                 return res.status(400).json({
-                    error: { message: `Missing ${key} is request body`}
+                    error: { message: `Missing '${key}' in request body`}
                 })
             }
         }
+        
         CharacterService.insertCharacter(
             req.app.get('db'),
             newCharacter
         )
-        .then(character => {
-            res
-                .status(201)
-                .location(req.originalUrl + `/${character.characterid}`)
-                .json(serializeCharacter(character))
-        })
-        .catch(next)
+            .then(character => {
+                res
+                    .status(201)
+                    .location(`/characters/${character.characterid}`)
+                    .json(character)
+            })
+            .catch(next)
     })
 
 characterRouter
@@ -60,21 +59,21 @@ characterRouter
             req.app.get('db'),
             req.params.characterid
         )
-        .then(character => {
-            //Make sure we find the character
-            if (!character) {
-                return res.status(404).json({
-                    error: { error: `Character does not exsist.`}
-                })
-            }  
-            res.character = character;
-            next()
+            .then(character => {
+                if (!character) {
+                    return res.status(404).json({
+                        error: { message: `Character does not exist` }
+                    })
+                }
+                res.character = character // save the character for the next middleware
+                next()
+            })
+            .catch(next)
         })
-        .catch(next)
-    })
     .get((req, res, next) => {
-        res.json(serializeCharacter(res.character));
+        res.json(serializeCharacter(res.character)) 
     })
+
     .delete((req, res, next) => {
         CharacterService.deleteCharacter(
             req.app.get('db'),
@@ -85,6 +84,7 @@ characterRouter
         })
         .catch(next)
     })
+
     .patch(jsonParser, (req, res, next) => {
         const { characterid, userid, characterrole, charactername, species, attributes, disciplines, charactervalue } = req.body;
         const updateCharacter = { characterid, userid, characterrole, charactername, species, attributes, disciplines, charactervalue };

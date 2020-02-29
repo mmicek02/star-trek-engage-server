@@ -35,32 +35,24 @@ function makeCharacterArray() {
 
 function makeMaliciousCharacter() {
     const maliciousCharacter = {
-        characterid: 1,
+        characterid: 911,
         userid: 1,
         characterrole: '<script>alert("xss");</script>',
-        charactername: 'Captain Ty',
-        species: `Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.`,
+        charactername: `Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.`,
+        species: 'human',
         attributes: [
             11, 10, 9, 9, 8, 7
         ],
         disciplines: [
             5, 4, 3, 3, 2, 2
         ],
-        charactervalue: 'Pretty'
+        charactervalue: 'Pretty',
+        equipment: 'Tricorder',
     }
     const expectedCharacter = {
-        characterid: 1,
-        userid: 1,
-        characterrole: '&lt;script&gt;alert(\"xss\");&lt;/script&gt;',
-        charactername: 'Captain Ty',
-        species: `Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.`,
-        attributes: [
-            11, 10, 9, 9, 8, 7
-        ],
-        disciplines: [
-            5, 4, 3, 3, 2, 2
-        ],
-        charactervalue: 'Pretty'
+        ...maliciousCharacter,
+        characterrole: '<script>alert("xss");</script>',
+        charactername: `Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.`,
     }
     return {
         maliciousCharacter,
