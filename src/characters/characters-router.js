@@ -2,36 +2,37 @@ const express = require('express');
 const uuid = require('uuid/v4');
 const CharacterService = require('./character-service');
 const xss = require('xss');
-const { characters } = require('../store');
 
 const characterRouter = express.Router()
 const jsonParser = express.json()
 
 const serializeCharacter = character => ({
     characterid: character.characterid,
-    userId: character.userId,
-    characterRole: character.characterRole,
-    characterName: character.characterName,
+    userid: character.userid,
+    characterrole: character.characterrole,
+    charactername: character.charactername,
     species: character.species,
     attributes: character.attributes,
     disciplines: character.disciplines,
-    characterValue: character.characterValue
+    charactervalue: character.charactervalue
 })
 
 characterRouter
     .route('/')
     .get((req, res, next) => {
-        CharacterService.getAllCharacters(
-            req.app.get('db')
-        )
+        const knexIntance = req.app.get('db')
+        CharacterService.getAllCharacters(knexIntance)
+            .then(characters => {
+                res.json(characters)
+            })
         .then(characters => {
             res.json(characters.map(serializeCharacter))
         })
         .catch(next) 
     })
     .post(jsonParser, (req, res, next) => {
-        const { characterid, userId, characterRole, characterName, species, attributes, disciplines, characterValue } = req.body;
-        const newCharacter = { characterid, userId, characterRole, characterName, species, attributes, disciplines, characterValue };
+        const { characterid, userid, characterrole, charactername, species, attributes, disciplines, charactervalue } = req.body;
+        const newCharacter = { characterid, userid, characterrole, charactername, species, attributes, disciplines, charactervalue };
         for (const [key, value] of Object.entries(newCharacter)) {
             if (value == null) {
                 return res.status(400).json({
@@ -53,7 +54,7 @@ characterRouter
     })
 
 characterRouter
-    .route('/:characterId')
+    .route('/:characterid')
     .all((req, res, next) => {
         CharacterService.getById(
             req.app.get('db'),
@@ -77,7 +78,7 @@ characterRouter
     .delete((req, res, next) => {
         CharacterService.deleteCharacter(
             req.app.get('db'),
-            req.params.characterId
+            req.params.characterid
         )
         .then(() => {
             res.status(204).end()
@@ -85,8 +86,8 @@ characterRouter
         .catch(next)
     })
     .patch(jsonParser, (req, res, next) => {
-        const { characterid, userId, characterRole, characterName, species, attributes, disciplines, characterValue } = req.body;
-        const updateCharacter = { characterid, userId, characterRole, characterName, species, attributes, disciplines, characterValue };
+        const { characterid, userid, characterrole, charactername, species, attributes, disciplines, charactervalue } = req.body;
+        const updateCharacter = { characterid, userid, characterrole, charactername, species, attributes, disciplines, charactervalue };
         for (const [key, value] of Object.entries(updateCharacter)) {
             if(value == null) {
                 return res.status(400).json({

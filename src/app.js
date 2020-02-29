@@ -8,6 +8,7 @@ const { NODE_ENV } = require('./config')
 const uuid = require('uuid/v4');
 const characterRouter = require('./characters/characters-router')
 
+
 const app = express()
 
 const morganOption = (NODE_ENV === 'production')
@@ -22,6 +23,11 @@ app.use(express.json());
 app.get('/', (req, res) => {
     res.send('Hello, world!')
 })
+
+app.get('/xss', (req, res) => {
+    res.cookie('secretToken', '1234567890');
+    res.sendFile(__dirname + '/xss-example.html');
+  });
 
 app.use('/characters', characterRouter)
 

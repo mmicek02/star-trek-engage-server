@@ -11,21 +11,21 @@ const CharacterService = {
                 return rows[0]
             })
     },
-    getById(knex, id) {
+    getById(knex, characterid) {
         return knex
             .from('characters')
             .select('*')
-            .where('id', id)
+            .where('characterid', characterid)
             .first();
     },
-    deleteCharacter(knex, id) {
+    deleteCharacter(knex, characterid) {
         return knex('characters')
-            .where({id})
+            .where({ characterid })
             .delete()
     },
-    updateCharacter(knex, id, newCharacterFields) {
+    updateCharacter(knex, characterid, newCharacterFields) {
         return knex('characters')
-            .where({id})
+            .where({ characterid })
             .update(newCharacterFields)
     },
 };
