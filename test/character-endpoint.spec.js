@@ -21,11 +21,11 @@ let db
     afterEach(() => db('characters').truncate())
 
     // Tests for when there are characters
-    describe(`GET /characters`, () => {
+    describe(`GET /api/characters`, () => {
         context(`Given no characters`, () => {
             it(`responds with 200 and an empty list`, () => {
                 return supertest(app)
-                    .get('/characters')
+                    .get('/api/characters')
                     .expect(200, [])
             })
         })
@@ -39,7 +39,7 @@ let db
             // Tests for when there is data
             it(`responds with 200 and all characters from 'characters' table`, () => {
                 return supertest(app)
-                   .get('/characters')
+                   .get('/api/characters')
                    .expect(200, testCharacters)
             })
         })
@@ -54,13 +54,13 @@ let db
 
             it(`removes XSS attack content`, () => {
                 return supertest(app)
-                    .get(`/characters/${maliciousCharacter.characterid}`)
+                    .get(`/api/characters/${maliciousCharacter.characterid}`)
                     .expect(200, expectedCharacter)
             })
         })
     })
 
-    describe(`POST /characters`, () => {
+    describe(`POST /api/characters`, () => {
         it(`creates a character, responding with 201 and the new character`, () => {
             const newCharacter = {
                 userid: 1,
@@ -77,7 +77,7 @@ let db
                 equipment: 'Tricorder',
             }
             return supertest(app)
-            .post('/characters')
+            .post('/api/characters')
             .send(newCharacter)
             .expect(201)
             .expect(res => {
@@ -90,11 +90,11 @@ let db
                 expect(res.body.charactervalue).to.eql(newCharacter.charactervalue)
                 expect(res.body.equipment).to.eql(newCharacter.equipment)
                 expect(res.body).to.have.property('characterid')
-                expect(res.headers.location).to.eql(`/characters/${res.body.characterid}`)
+                expect(res.headers.location).to.eql(`/api/characters/${res.body.characterid}`)
             })
             .then(res => 
                 supertest(app)
-                    .get(`/characters/${res.body.characterid}`)
+                    .get(`/api/characters/${res.body.characterid}`)
                     .expect(res.body)
             )
         })
@@ -121,7 +121,7 @@ let db
                 delete newCharacter[field]
     
                 return supertest(app)
-                    .post('/characters')
+                    .post('/api/characters')
                     .send(newCharacter)
                     .expect(400, {
                         error: { message: `Missing '${field}' in request body` }
@@ -130,7 +130,7 @@ let db
         })
     })
 
-    describe(`GET /characters/:characterid`, () => {
+    describe(`GET /api/characters/:characterid`, () => {
         context(`Given no characters`, () => {
             it(`responds with 404`, () => {
                 const characterId = 123456
@@ -154,7 +154,7 @@ let db
                 const characterId = 2
                 const expectedCharacter = testCharacters[characterId -1]
                 return supertest(app)
-                    .get(`/characters/${characterId}`)
+                    .get(`/api/characters/${characterId}`)
                     .expect(200, expectedCharacter)
             })
         })
@@ -170,13 +170,13 @@ let db
 
             it(`removes XSS attack content`, () => {
                 return supertest(app)
-                    .get(`/characters/${maliciousCharacter.characterid}`)
+                    .get(`/api/characters/${maliciousCharacter.characterid}`)
                     .expect(200, expectedCharacter)
             })
         })
     })
 
-    describe(`DELETE /characters/:characterid`, () => {
+    describe(`DELETE /api/characters/:characterid`, () => {
         context(`Given there are characters in the database`, () => {
             const testCharacters = makeCharacterArray()
 
@@ -190,11 +190,11 @@ let db
                 const idToRemove = 2
                 const expectedCharacters = testCharacters.filter(character => character.characterid !== idToRemove)
                 return supertest(app)
-                    .delete(`/characters/${idToRemove}`)
+                    .delete(`/api/characters/${idToRemove}`)
                     .expect(204)
                     .then(res => 
                         supertest(app)
-                        .get(`/characters`)
+                        .get(`/api/characters`)
                         .expect(expectedCharacters)
                     )
             })
@@ -204,125 +204,101 @@ let db
             it(`responds with 404`, () => {
                 const characterId = 123456
                 return supertest(app)
-                    .delete(`/characters/${characterId}`)
+                    .delete(`/api/characters/${characterId}`)
                     .expect(404, {
                         error: { message: `Character does not exist` }
                     })
             })
         })
     })
+
+    describe(`PATCH /api/characters/:characterid`, () => {
+        context(`Given no characters`, () => {
+            it(`responds wiht 404`, () => {
+                const characterId = 123456
+                return supertest(app)
+                    .patch(`/api/characters/${characterId}`)
+                    .expect(404, {
+                        error: { message: `Character does not exist` }
+                    })
+            })
+        })
+
+        context(`Given there are characters in the database`, () => {
+            const testCharacters = makeCharacterArray()
+
+            beforeEach('insert characters', () => {
+                return db
+                    .into('characters')
+                    .insert(testCharacters)
+            })
+            it(`responds with 204 and updates the character`, () => {
+                const idOfCharacterToUpdate = 2
+                const updateCharacter = {
+                    userid: 1,
+                    characterrole: 'Chief Medical Officer',
+                    charactername: 'Updated Mr. Vulcan',
+                    species: 'Vulcan',
+                    attributes: [
+                        11, 10, 9, 9, 8, 7
+                    ],
+                    disciplines: [
+                        5, 4, 3, 3, 2, 2
+                    ],
+                    charactervalue: 'Smart',
+                    equipment: 'Tricorder',
+                }
+                const expectedCharacter = {
+                    ...testCharacters[idOfCharacterToUpdate - 1],
+                    ...updateCharacter
+                }
+
+                return supertest(app)
+                    .patch(`/api/characters/${idOfCharacterToUpdate}`)
+                    .send(updateCharacter)
+                    .expect(204)
+                    .then(res => 
+                        supertest(app)
+                            .get(`/api/characters/${idOfCharacterToUpdate}`)
+                            .expect(expectedCharacter)
+                    )
+            })
+
+            it(`responds with 400 when no required fields supplied`, () => {
+                const idOfCharacterToUpdate = 2
+                return supertest(app)
+                    .patch(`/api/characters/${idOfCharacterToUpdate}`)
+                    .send({ irreleventField: 'foo' })
+                    .expect(400, {
+                        error: { 
+                            message: `Request body must contain either 'characterrole', 'species', 'charactervalue' or 'charactername'`
+                        }
+                    })
+            })
+
+            it(`responds with 204 when updating only a subset of fields`, () => {
+                const idOfCharacterToUpdate = 2
+                const updateCharacter = {
+                    charactername: "updated character name",
+                }
+                const expectedCharacter = {
+                    ...testCharacters[idOfCharacterToUpdate - 1],
+                    ...updateCharacter
+                }
+            
+                return supertest(app)
+                    .patch(`/api/characters/${idOfCharacterToUpdate}`)
+                    .send({
+                        ...updateCharacter,
+                        fieldToIgnore: 'should not be in GET response'
+                    })
+                    .expect(204)
+                    .then(res =>
+                        supertest(app)
+                            .get(`/api/characters/${idOfCharacterToUpdate}`)
+                        .expect(expectedCharacter)
+                    )
+                })
+            })
+    })
 })
-
-
-//         // Tests to delete a character with a certain 'characterid'
-//         it(`deleteCharacter() removes a character by 'characterid' from 'characters' table`, () => {
-//             const characterId = 2
-//             return CharacterService.deleteCharacter(db, characterId)
-//                 .then(() => CharacterService.getAllCharacters(db))
-//                 .then(allCharacters => {
-//                     testCharacters = [
-//                         {
-//                             characterid: 1,
-//                             userid: 1,
-//                             characterrole: 'Chief Engineer',
-//                             charactername: 'Captain Ty',
-//                             species: 'human',
-//                             attributes: [
-//                                 11, 10, 9, 9, 8, 7
-//                             ],
-//                             disciplines: [
-//                                 5, 4, 3, 3, 2, 2
-//                             ],
-//                             charactervalue: 'Smart',
-//                             equipment: 'phaser'
-//                         }
-//                     ]
-//                     const expected = testCharacters.filter(character => character.characterid !== characterId)
-//                     expect(allCharacters).to.eql(expected)
-//                 })
-//         })
-//         // Tests to update a character with a certain 'characterid'
-//         it(`updateCharacter() updates a character from the 'characters' table`, () => {
-//             const idOfCharacterToUpdate = 1
-//             const newCharacterData = {
-//                 userid: 1,
-//                 characterrole: 'Chief Engineer',
-//                 charactername: 'Captain Ty',
-//                 species: 'human',
-//                 attributes: [
-//                     11, 10, 9, 9, 8, 7
-//                 ],
-//                 disciplines: [
-//                     5, 4, 3, 3, 2, 2
-//                 ],
-//                 charactervalue: 'Smart',
-//                 equipment: 'phaser'
-//             }
-//             return CharacterService.updateCharacter(db, idOfCharacterToUpdate, newCharacterData)
-//                 .then(() => CharacterService.getById(db, idOfCharacterToUpdate))
-//                 .then(character => {
-//                     expect(character).to.eql({
-//                         characterid: idOfCharacterToUpdate,
-//                         ...newCharacterData,
-//                     })
-//                 })
-//         })
-//         // Test for when XSS attack characters present
-//         context(`Given an XSS attack character`, () => {
-//         const { maliciousCharacter, expectedCharacter} = makeMaliciousCharacter()
-
-//         beforeEach('insert malicious article', () => {
-//             return db
-//                 .into('characters')
-//                 .insert(maliciousCharacter)
-//         })
-
-//         it(`removes XSS attack content`, () => {
-//             return supertest(app)
-//                 .get(`/characters/${maliciousCharacter.characterid}`)
-//                 .expect(200, expectedCharacter)
-//         })
-//     })
-//     })
-//     // Tests for when there no characters
-//     context(`Given 'characters' has no data`, () => {
-//         //Test for when there are no characters at all
-//         it(`getAllCharacters() resolves an empty array`, () => {
-//             return CharacterService.getAllCharacters(db)
-//                 .then(actual => {
-//                     expect(actual).to.eql([])
-//                 })
-//         })
-//         // Tests for when a new character is added and assigns it a new 'characterid'
-//         it(`insertCharacter() inserts a character and resolves the character with an 'characterid`, () => {
-//             const newCharacter = {
-//                 userid: 1,
-//                 characterrole: 'Chief Office',
-//                 charactername: 'Mr. Vulcan',
-//                 species: 'Vulcan',
-//                 attributes: [
-//                     11, 10, 9, 9, 8, 7
-//                 ],
-//                 disciplines: [
-//                     5, 4, 3, 3, 2, 2
-//                 ],
-//                 charactervalue: 'Smart',
-//                 equipment: 'Tricorder',
-//             }
-//             return CharacterService.insertCharacter(db, newCharacter)
-//                 .then(actual => {
-//                     expect (actual).to.eql({
-//                         characterid: 1,
-//                         userid: newCharacter.userid,
-//                         characterrole: newCharacter.characterrole,
-//                         charactername: newCharacter.charactername,
-//                         species: newCharacter.species,
-//                         attributes: newCharacter.attributes,
-//                         disciplines: newCharacter.disciplines,
-//                         charactervalue: newCharacter.charactervalue,
-//                         equipment: newCharacter.equipment,
-//                     })
-//                 })
-//         })
-//     })
-// })  

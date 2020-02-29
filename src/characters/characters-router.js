@@ -1,3 +1,4 @@
+const path = require('path')
 const express = require('express');
 const xss = require('xss');
 const CharacterService = require('./character-service');
@@ -46,7 +47,7 @@ characterRouter
             .then(character => {
                 res
                     .status(201)
-                    .location(`/characters/${character.characterid}`)
+                    .location(path.posix.join(req.originalUrl, `${character.characterid}`))
                     .json(character)
             })
             .catch(next)
@@ -86,19 +87,22 @@ characterRouter
     })
 
     .patch(jsonParser, (req, res, next) => {
-        const { characterid, userid, characterrole, charactername, species, attributes, disciplines, charactervalue } = req.body;
-        const updateCharacter = { characterid, userid, characterrole, charactername, species, attributes, disciplines, charactervalue };
-        for (const [key, value] of Object.entries(updateCharacter)) {
-            if(value == null) {
+        const { characterid, userid, characterrole, charactername, species, attributes, disciplines, charactervalue, equipment} = req.body;
+        const characterToUpdate = { characterid, userid, characterrole, charactername, species, attributes, disciplines, charactervalue, equipment };
+        
+        const numberOfValues = Object.values(characterToUpdate).filter(Boolean).length            
+            if(numberOfValues === 0) {
                 return res.status(400).json({
-                    error: { message: `Missing '${key}' in request body`}
+                    error: { 
+                        message: `Request body must contain either 'characterrole', 'species', 'charactervalue' or 'charactername'`
+                    }
                 })
             }
-        }
+        
         CharacterService.updateCharacter(
             req.app.get('db'),
             req.params.characterid,
-            updateCharacter
+            characterToUpdate
         )
         .then(numRowsAffected => {
             res.status(204).end()

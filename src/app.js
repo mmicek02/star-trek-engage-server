@@ -29,7 +29,7 @@ app.get('/xss', (req, res) => {
     res.sendFile(__dirname + '/xss-example.html');
   });
 
-app.use('/characters', characterRouter)
+app.use('/api/characters', characterRouter)
 
 app.use(function errorHandle(error, req, res, next) {
     let response
