@@ -5,8 +5,9 @@ const cors = require('cors')
 const helmet = require('helmet')
 
 const { NODE_ENV } = require('./config')
-const uuid = require('uuid/v4');
+
 const characterRouter = require('./characters/characters-router')
+const usersRouter = require('./users/users-router')
 
 
 const app = express()
@@ -30,6 +31,7 @@ app.get('/xss', (req, res) => {
   });
 
 app.use('/api/characters', characterRouter)
+app.use('/api/users', usersRouter)
 
 app.use(function errorHandle(error, req, res, next) {
     let response

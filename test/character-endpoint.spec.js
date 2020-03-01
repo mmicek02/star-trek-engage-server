@@ -202,7 +202,7 @@ let db
             })
         })
 
-        context(`Given no articles`, () => {
+        context(`Given no characters`, () => {
             it(`responds with 404`, () => {
                 const characterId = 123456
                 return supertest(app)
