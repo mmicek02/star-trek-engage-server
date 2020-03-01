@@ -18,7 +18,7 @@ const UsersService = {
             .where('userid', userid)
             .first();
     },
-    deleteUser(knex, Uuserid) {
+    deleteUser(knex, userid) {
         return knex('users')
             .where({ userid })
             .delete()

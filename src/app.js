@@ -7,7 +7,7 @@ const helmet = require('helmet')
 const { NODE_ENV } = require('./config')
 
 const characterRouter = require('./characters/characters-router')
-const usersRouter = require('./users/users-router')
+const userRouter = require('./users/users-router')
 
 
 const app = express()
@@ -25,13 +25,8 @@ app.get('/', (req, res) => {
     res.send('Hello, world!')
 })
 
-app.get('/xss', (req, res) => {
-    res.cookie('secretToken', '1234567890');
-    res.sendFile(__dirname + '/xss-example.html');
-  });
-
 app.use('/api/characters', characterRouter)
-app.use('/api/users', usersRouter)
+app.use('/api/users', userRouter)
 
 app.use(function errorHandle(error, req, res, next) {
     let response

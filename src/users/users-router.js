@@ -2,7 +2,7 @@ const path = require('path')
 const express = require('express');
 const UsersService = require('./users-service');
 
-const usersRouter = express.Router()
+const userRouter = express.Router()
 const jsonParser = express.json()
 
 const serializeUser = user => ({
@@ -11,7 +11,7 @@ const serializeUser = user => ({
     userpassword: user.userpassword,
 })
 
-usersRouter
+userRouter
     .route('/')
     .get((req, res, next) => {
         const knexIntance = req.app.get('db')
@@ -46,7 +46,7 @@ usersRouter
             .catch(next)
     })
 
-usersRouter
+userRouter
     .route('/:userid')
     .all((req, res, next) => {
         UsersService.getById(
@@ -80,3 +80,5 @@ usersRouter
         })
         .catch(next)
     })
+
+module.exports = userRouter;

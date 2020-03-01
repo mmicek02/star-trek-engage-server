@@ -67,7 +67,7 @@ describe(`User Endpoints`, () => {
 
             it('responds with 200 and the specified article', () => {
                 const userId = 2
-                const expectedUser = testusers[userId -1]
+                const expectedUser = testUsers[userId -1]
                 return supertest(app)
                     .get(`/api/users/${userId}`)
                     .expect(200, expectedUser)
@@ -75,7 +75,7 @@ describe(`User Endpoints`, () => {
         })
     })
 
-    describe(`DELETE /api/users/:characterid`, () => {
+    describe(`DELETE /api/users/:userid`, () => {
         context(`Given there are users in the database`, () => {
             const testUsers = makeUserArray()
 
@@ -85,7 +85,7 @@ describe(`User Endpoints`, () => {
                     .insert(testUsers)
             })
 
-            it('responds with 204 and removes the character', () => {
+            it('responds with 204 and removes the user', () => {
                 const idToRemove = 2
                 const expectedUsers = testUsers.filter(user => user.userid !== idToRemove)
                 return supertest(app)
