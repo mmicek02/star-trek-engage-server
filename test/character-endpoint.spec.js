@@ -4,7 +4,12 @@ const { makeUserArray } = require('./users.fixture');
 const { makeCharacterArray, makeMaliciousCharacter } = require('./character.fixture');
 
 describe(`Character endpoints`, () => {
-let db
+    let db
+
+    function makeAuthHeader(user) {
+        const token = Buffer.from(`${user.username}:${user.password}`).toString('base64')
+        return `Basic ${token}`
+    }
 
     before(() => {
         db = knex({
@@ -20,6 +25,54 @@ let db
 
     afterEach(() => db('characters').truncate())
 
+    describe.only(`Protected endpints`, () => {
+        const testCharacters = makeCharacterArray()
+        const testUsers = makeUserArray()
+        beforeEach('insert characters', () => {
+            return db
+                .into('characters')
+                .insert(testCharacters)
+        })
+        describe(`GET /api/characters/:characterid`, () => {
+            it(`responds with 401 'Missing basic token' when no basic token`, () => {
+                return supertest(app)
+                    .get(`/api/characters/123`)
+                    .expect(401, {
+                        error: `Missing basic token`
+                    })
+            })
+
+            it(`responds 401 'Unauthorized request' when no credentials in token`, () => {
+                const userNoCreds = { username: '', password: '' }
+                return supertest(app)
+                    .get(`/api/characters/123`)
+                    .set('Authorization', makeAuthHeader(userNoCreds))
+                    .expect(401, { 
+                        error: `Unauthorized request` 
+                    })
+            })
+
+            it(`responds 401 'Unauthorized request' when invalid user`, () => {
+                const userInvalidCreds = { username: 'user-not', password: 'existy' }
+                return supertest(app)
+                    .get(`/api/characters/1`)
+                    .set('Authorization', makeAuthHeader(userInvalidCreds))
+                    .expect(401, { 
+                            error: `Unauthorized request` }
+                        )
+            })
+
+            it(`responds 401 'Unauthorized request' when invalid password`, () => {
+                const userInvalidPass = { username: testUsers[0].username, password: 'wrong' }
+                return supertest(app)
+                    .get(`/api/characters/1`)
+                    .set('Authorization', makeAuthHeader(userInvalidPass))
+                    .expect(401, { 
+                        error: `Unauthorized request` 
+                    })
+            })
+        })
+    })
     // Tests for when there are characters
     describe(`GET /api/characters`, () => {
         context(`Given no characters`, () => {
@@ -130,12 +183,19 @@ let db
         })
     })
 
-    describe(`GET /api/characters/:characterid`, () => {
+    describe.only(`GET /api/characters/:characterid`, () => {
         context(`Given no characters`, () => {
+            const testUsers = makeUserArray()
+            beforeEach(() => {
+                return db
+                    .into('users')
+                    .insert(testUsers)
+            })
             it(`responds with 404`, () => {
                 const characterId = 123456
                 return supertest(app)
                     .get(`/api/characters/${characterId}`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(404, {
                         error: { 
                             message: `Character does not exist` 
@@ -145,7 +205,8 @@ let db
         })
         context('Given there are characters in the database', () => {
             const testCharacters = makeCharacterArray()
-            
+            const testUsers = makeUserArray()
+
             beforeEach('insert characters', () => {
                 return db
                     .into('characters')
@@ -157,12 +218,14 @@ let db
                 const expectedCharacter = testCharacters[characterId -1]
                 return supertest(app)
                     .get(`/api/characters/${characterId}`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(200, expectedCharacter)
             })
         })
 
         context(`Given an XSS attack character`, () => {
             const { maliciousCharacter, expectedCharacter} = makeMaliciousCharacter()
+            const testUsers = makeUserArray()
 
             beforeEach('insert malicious article', () => {
                 return db
@@ -173,6 +236,7 @@ let db
             it(`removes XSS attack content`, () => {
                 return supertest(app)
                     .get(`/api/characters/${maliciousCharacter.characterid}`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(200, expectedCharacter)
             })
         })

@@ -1,17 +1,21 @@
-# Express Boilerplate!
+ STAR TREK ENGAGE
 
-This is a boilerplate project used for starting new projects!
+## LINK TO LIVE APP
+https://star-trek-engage-client-app.now.sh/
 
-## Set up
+## SCREENSHOTS
+![Screenshot of the landing page](Screenshots/landingPage.png)
 
-Complete the following steps to start a new project (NEW-PROJECT-NAME):
+![Screenshot of the character creation](Screenshots/characterCreation.png)
 
-1. Clone this repository to your local machine `git clone BOILERPLATE-URL NEW-PROJECTS-NAME`
-2. `cd` into the cloned repository
-3. Make a fresh start of the git history for this project with `rm -rf .git && git init`
-4. Install the node dependencies `npm install`
-5. Move the example Environment file to `.env` that will be ignored by git and read by the express server `mv example.env .env`
-6. Edit the contents of the `package.json` to use NEW-PROJECT-NAME instead of `"name": "express-boilerplate",`
+![Screenshot of the character list](Screenshots/characterList.png)
+
+## SUMMARY OF APP
+Star Trek Engage is a web application designed as an aid to to players of the Star Trek tabletop role playing game (TTRPG) character creation process. This app will take the user (player) through each step involved in the process of making their character. Buy using the framework and methods already established in the published rulebook by Modiphius Entertainment, using this app means the process of creating a character with compelling motivations and interesting background is even easier. At the end of the process the user of the app will be able to export their completed character sheet as a PDF, meaning they are 100% ready for the thrilling adventures that awaits them and the rest of their crew!
+
+## TECHNOLOY USED
+Font-end: HTML, CSS, JS, REACT
+Back-end: NODE, SQL
 
 ## Scripts
 
