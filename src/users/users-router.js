@@ -1,7 +1,6 @@
 const path = require('path')
 const express = require('express');
 const UsersService = require('./users-service');
-
 const userRouter = express.Router()
 const jsonParser = express.json()
 
@@ -22,10 +21,10 @@ userRouter
             .catch(next) 
     })
     .post(jsonParser, (req, res, next) => {
-        const { userid, username, userpassword } = req.body;
-        const newUsers = { userid, username, userpassword };
+        const { username, userpassword } = req.body;
+        const newUser = { username, userpassword };
         
-        for (const [key, value] of Object.entries(newUsers)) {
+        for (const [key, value] of Object.entries(newUser)) {
             if (value == null) {
                 return res.status(400).json({
                     error: { message: `Missing '${key}' in request body`}
@@ -35,13 +34,13 @@ userRouter
         
         UsersService.insertUser(
             req.app.get('db'),
-            newUsers
+            newUser
         )
             .then(user => {
                 res
                     .status(201)
-                    .location(path.posix.join(req.originalUrl, `${user.userid}`))
-                    .json(user)
+                    .location(req.originalUrl + `/${user.userid}`)
+                    .json(serializeUser(user))
             })
             .catch(next)
     })

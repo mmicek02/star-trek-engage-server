@@ -25,7 +25,7 @@ describe(`Character endpoints`, () => {
 
     afterEach(() => db('characters').truncate())
 
-    describe.only(`Protected endpints`, () => {
+    describe(`Protected endpints`, () => {
         const testCharacters = makeCharacterArray()
         const testUsers = makeUserArray()
         beforeEach('insert characters', () => {
@@ -183,7 +183,7 @@ describe(`Character endpoints`, () => {
         })
     })
 
-    describe.only(`GET /api/characters/:characterid`, () => {
+    describe(`GET /api/characters/:characterid`, () => {
         context(`Given no characters`, () => {
             const testUsers = makeUserArray()
             beforeEach(() => {

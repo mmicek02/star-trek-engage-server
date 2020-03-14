@@ -3,17 +3,17 @@ function makeUserArray() {
         {
             userid: 1,
             username: "Mike",
-            userpassword: "password"
+            userpassword: "password",
         },
         {
             userid: 2,
             username: "Larry",
-            userpassword: "password"
+            userpassword: "password",
         },
         {
             userid: 3,
             username: "Ty",
-            userpassword: "hidden"
+            userpassword: "hidden",
         }
     ]
 }

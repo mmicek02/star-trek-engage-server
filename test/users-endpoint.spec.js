@@ -2,7 +2,7 @@ const knex = require('knex');
 const app = require('../src/app');
 const { makeUserArray } = require('./users.fixture');
 
-describe(`User Endpoints`, () => {
+describe.only(`User Endpoints`, () => {
     let db 
 
     before(() => {
@@ -65,7 +65,7 @@ describe(`User Endpoints`, () => {
                     .insert(testUsers)
             })
 
-            it('responds with 200 and the specified article', () => {
+            it('responds with 200 and the specified users', () => {
                 const userId = 2
                 const expectedUser = testUsers[userId -1]
                 return supertest(app)
@@ -74,6 +74,51 @@ describe(`User Endpoints`, () => {
             })
         })
     })
+
+    describe(`POST /api/users`, () => {
+        it(`creates a user and responds 201 with the new user`,()=> {
+            const newUser = {
+                username: 'Username',
+                userpassword: 'Password',
+            }
+            return supertest(app)
+                .post('/api/users')
+                .send(newUser)
+                .expect(201)
+                .expect(res => {
+                    expect(res.body.username).to.eql(newUser.username)
+                    expect(res.body.userpassword).to.eql(newUser.userpassword)
+                    expect(res.body).to.have.property('userid')
+                    expect(res.headers.location).to.eql(`/api/users/${res.body.userid}`)
+                })
+                    .then(res => {
+                        return supertest(app)
+                            .get(`/users/${res.body.userid}`)
+                            .expect(res.body)
+                    })
+        })
+
+        const requiredFields = ['username', 'userpassword']
+
+        requiredFields.forEach(field => {
+            const newUser = {
+                username: 'Username',
+                userpassword: 'Password',
+        }
+
+            it(`responds with 400 and an error message when the '${field}' is missing`, () => {
+                delete newUser[field]
+
+                return supertest(app)
+                    .post('/api/users')
+                    .send(newUser)
+                    .expect(400, {
+                        error: { message: `Missing '${field}' in request body` }
+                    })
+            })
+        })
+    })
+
 
     describe(`DELETE /api/users/:userid`, () => {
         context(`Given there are users in the database`, () => {
