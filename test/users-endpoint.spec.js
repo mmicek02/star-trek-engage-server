@@ -15,9 +15,9 @@ describe.only(`User Endpoints`, () => {
 
     after(() => db.destroy())
 
-    before(() => db('users').truncate())
+    before(() => db.raw('TRUNCATE characters, users RESTART IDENTITY CASCADE'))
 
-    afterEach(() => db('users').truncate())
+    afterEach(() => db.raw('TRUNCATE characters, users RESTART IDENTITY CASCADE'))
 
     describe(`GET /api/users`, () => {
         context(`Given no users`, () => {
@@ -93,7 +93,7 @@ describe.only(`User Endpoints`, () => {
                 })
                     .then(res => {
                         return supertest(app)
-                            .get(`/users/${res.body.userid}`)
+                            .get(`/api/users/${res.body.userid}`)
                             .expect(res.body)
                     })
         })
