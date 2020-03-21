@@ -7,7 +7,7 @@ describe(`Character endpoints`, () => {
     let db
 
     function makeAuthHeader(user) {
-          const token = Buffer.from(`${user.username}:${user.password}`).toString('base64')
+          const token = Buffer.from(`${user.username}:${user.userpassword}`).toString('base64')
           return `Basic ${token}`
     }
 
@@ -40,21 +40,21 @@ describe(`Character endpoints`, () => {
              .expect(401, { error: `Missing basic token` })
          })
          it(`responds 401 'Unauthorized request' when no credentials in token`, () => {
-           const userNoCreds = { username: '', password: '' }
+           const userNoCreds = { username: '', userpassword: '' }
            return supertest(app)
              .get(`/api/characters/123`)
              .set('Authorization', makeAuthHeader(userNoCreds))
              .expect(401, { error: `Unauthorized request` })
          })
          it(`responds 401 'Unauthorized request' when invalid user`, () => {
-            const userInvalidCreds = { username: 'user-not', password: 'existy' }
+            const userInvalidCreds = { username: 'user-not', userpassword: 'existy' }
             return supertest(app)
               .get(`/api/characters/1`)
               .set('Authorization', makeAuthHeader(userInvalidCreds))
               .expect(401, { error: `Unauthorized request` })
           })
-        it(`responds 401 'Unauthorized request' when invalid password`, () => {
-            const userInvalidPass = { username: testUsers[0].username, password: 'wrong' }
+        it(`responds 401 'Unauthorized request' when invalid userpassword`, () => {
+            const userInvalidPass = { username: testUsers[0].username, userpassword: 'wrong' }
             return supertest(app)
             .get(`/api/characters/1`)
             .set('Authorization', makeAuthHeader(userInvalidPass))
