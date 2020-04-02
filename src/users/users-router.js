@@ -3,6 +3,9 @@ const express = require('express');
 const UsersService = require('./users-service');
 const userRouter = express.Router()
 const jsonParser = express.json()
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
+
 
 const serializeUser = user => ({
     userid: user.userid,
@@ -22,7 +25,10 @@ userRouter
     })
     .post(jsonParser, (req, res, next) => {
         const { username, userpassword } = req.body;
-        const newUser = { username, userpassword };
+        const newUser = { 
+            username, 
+            userpassword: bcrypt.hashSync(userpassword, 4)
+             };
         
         for (const [key, value] of Object.entries(newUser)) {
             if (value == null) {
