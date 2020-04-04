@@ -19,7 +19,7 @@ const serializeCharacter = character => ({
 
 characterRouter
     .route('/')
-    .all(requireAuth)
+    //.all(requireAuth)
     .get((req, res, next) => {
         const knexIntance = req.app.get('db')
         CharacterService.getAllCharacters(knexIntance)
@@ -56,7 +56,7 @@ characterRouter
 
 characterRouter
     .route('/:characterid')
-    .all(requireAuth)
+    //.all(requireAuth)
     .all((req, res, next) => {
         CharacterService.getById(
             req.app.get('db'),

@@ -1,12 +1,11 @@
 const knex = require('knex');
 const app = require('../src/app');
 const helpers = require('./test-helpers')
-const bcrypt = require('bcryptjs');
 
 const { makeUserArray } = require('./users.fixture');
 const { makeCharacterArray, makeMaliciousCharacter } = require('./character.fixture');
 
-describe.only(`Character endpoints`, () => {
+describe(`Character endpoints`, () => {
     let db
 
     const {
@@ -57,7 +56,7 @@ describe.only(`Character endpoints`, () => {
         context(`Given an XSS attack character`, () => {
             const { maliciousCharacter, expectedCharacter} = makeMaliciousCharacter()
             const testUsers = makeUserArray()
-
+ 
             beforeEach('insert malicious article', () => {
                 return db
                     .into('characters')

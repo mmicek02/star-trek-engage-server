@@ -10,7 +10,7 @@ const { NODE_ENV } = require('./config')
 
 const characterRouter = require('./characters/characters-router')
 const userRouter = require('./users/users-router')
-
+const authRouter = require('./Auth/auth-router')
 
 const app = express()
 
@@ -35,6 +35,7 @@ app.use(
 
 app.use('/api/characters', characterRouter)
 app.use('/api/users', userRouter)
+app.use('/api/auth', authRouter)
 
 app.use(function errorHandle(error, req, res, next) {
     let response

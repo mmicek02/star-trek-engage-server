@@ -3,6 +3,7 @@ const express = require('express');
 const UsersService = require('./users-service');
 const userRouter = express.Router()
 const jsonParser = express.json()
+const AuthService = require('../Auth/auth-service')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
@@ -25,9 +26,11 @@ userRouter
     })
     .post(jsonParser, (req, res, next) => {
         const { username, userpassword } = req.body;
+        const passHash = bcrypt.hashSync(userpassword, 4);
+        console.log(passHash)
         const newUser = { 
             username, 
-            userpassword: bcrypt.hashSync(userpassword, 4)
+            userpassword: passHash
              };
         
         for (const [key, value] of Object.entries(newUser)) {
@@ -85,5 +88,6 @@ userRouter
         })
         .catch(next)
     })
+
 
 module.exports = userRouter;

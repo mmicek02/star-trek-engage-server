@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 
 function makeUserArray() {
   return [
@@ -54,7 +55,25 @@ function makeCharacterArray(users) {
       },
   ]
 }
-
+function makeExpectedCharacter(users, character=[]) {
+  const creator = users
+    .find(user => user.userid === character.userid)
+  
+    return {
+      characterid: character.characterid,
+      characterrole: character.characterrole,
+      charactername: character.charactername,
+      species: character.species,
+      attributes: character.attributes,
+      disciplines: character.disciplines,
+      charactervalue: character.charactervalue,
+      equipment: character.equipment,
+      creator: {
+        userid: creator.userid,
+        username: creator.username,
+      },
+    }
+}
 function makeMaliciousCharacter() {
   const maliciousCharacter = {
       characterid: 911,
@@ -83,8 +102,8 @@ function makeMaliciousCharacter() {
 }
 
 function makeCharactersFixtures() {
-  const testUsers = makeUsersArray()
-  const testCharacters = makeCharactersArray(testUsers)
+  const testUsers = makeUserArray()
+  const testCharacters = makeCharacterArray(testUsers)
   return { 
     testUsers, 
     testCharacters, 
@@ -110,9 +129,12 @@ function seedCharactersTables(db, users, characters =[]) {
   })
 }
 
-function makeAuthHeader(user) {
-  const token = Buffer.from(`${user.user_name}:${user.password}`).toString('base64')
-  return `Basic ${token}`
+function makeAuthHeader(user, secret = process.env.JWT_SECRET) {
+  const token = jwt.sign({ userid: user.userid}, secret, {
+    subject: user.username,
+    algorithm: 'HS256'
+  })
+  return `Bearer ${token}`
 }
 
 function seedUsers(db, users) {
@@ -133,8 +155,10 @@ function seedUsers(db, users) {
 module.exports = {
     makeUserArray,
     makeCharacterArray,
+    makeExpectedCharacter, 
     makeMaliciousCharacter,
     makeCharactersFixtures,
+    seedCharactersTables,
     makeAuthHeader,
     seedUsers,
   }
