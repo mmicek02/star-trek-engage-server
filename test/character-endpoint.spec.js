@@ -143,6 +143,7 @@ describe(`Character endpoints`, () => {
             })
             // Test Two
             it(`creates a character, responding with 201 and the new character`, () => {
+
                 const testUser = testUsers[0]
                 const newCharacter = {
                     characterrole: 'Chief Office',

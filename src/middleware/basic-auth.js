@@ -12,8 +12,6 @@ function requireAuth(req, res, next) {
         .from(basicToken, 'base64')
         .toString()
         .split(':')
-    
-    console.log(tokenUserName)
 
     if (!tokenUserName || !tokenUserPassword) {
         return res.status(401).json({ error: 'Unauthorized request' })

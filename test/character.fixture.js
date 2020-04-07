@@ -1,7 +1,7 @@
 function makeCharacterArray() {
     return [
         {
-            characterid: 1,
+            characterid: 3,
             userid: 1,
             characterrole: 'Chief Engineer',
             charactername: 'Captain Ty',
