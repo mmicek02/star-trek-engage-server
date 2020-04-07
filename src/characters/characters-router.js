@@ -29,8 +29,8 @@ characterRouter
             .catch(next) 
     })
     .post(requireAuth, jsonParser, (req, res, next) => {
-        const { userid, characterrole, charactername, species, attributes, disciplines, charactervalue, equipment } = req.body;
-        const newCharacter = { userid, characterrole, charactername, species, attributes, disciplines, charactervalue, equipment };
+        const { characterrole, charactername, species, attributes, disciplines, charactervalue, equipment } = req.body;
+        const newCharacter = { characterrole, charactername, species, attributes, disciplines, charactervalue, equipment };
         
         for (const [key, value] of Object.entries(newCharacter)) {
             if (value == null) {

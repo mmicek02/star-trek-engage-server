@@ -3,7 +3,7 @@ const app = require('../src/app');
 const { makeUserArray } = require('./users.fixture');
 const { makeCharacterArray, makeMaliciousCharacter } = require('./character.fixture');
 
-describe.only(`Character endpoints`, () => {
+describe(`Character endpoints`, () => {
     let db
 
     function makeAuthHeader(user) {
@@ -25,44 +25,58 @@ describe.only(`Character endpoints`, () => {
     
     afterEach(() => db('characters').truncate())
 
+    describe(`Protected endpoints`, () => {
 
-    describe.only(`Protected endpoints`, () => {
         const testCharacters = makeCharacterArray();
         const testUsers = makeUserArray();
 
-        beforeEach('insert characters and users', () => {
+        beforeEach('insert characters', () => {
             return db
-                .into('users').into(testUsers)
-                .into('characters').insert(testCharacters)
-
+             .into('users').into(testUsers)
+             .into('characters').insert(testCharacters)
         })
-       
-        describe(`GET /api/characters/:characterid`, () => {
-            console.log(testUsers[0])
-            // Test for when this header is missing or incorrect
-            it(`responds with 401 'Missing basic token' when no basic token`, () => {
-                return supertest(app)
-                 .get(`/api/characters/123`)
-                 .expect(401, { error: `Missing basic token` })
-            })
-            // Test for the protected endpoint when the token is present, but the credentials are missing
-            it(`responds 401 'Unauthorized request' when no credentials in token`, () => {
-                const userNoCreds = { username: '', userpassword: '' }
-                return supertest(app)
-                 .get(`/api/characters/123`)
-                 .set('Authorization', makeAuthHeader(userNoCreds))
-                 .expect(401, { error: `Unauthorized request` })
-            })
-            // Test for credentials for a user that doesn't exist 
-            it(`responds 401 'Unauthorized request' when invalid user`, () => {
-                   const userInvalidCreds = { username: 'user-not', userpassword: 'existy' }
-                   return supertest(app)
-                     .get(`/api/characters/1`)
-                     .set('Authorization', makeAuthHeader(userInvalidCreds))
-                     .expect(401, { error: `Unauthorized request` })
-            })
 
-          })
+        const protectedEnpoints = [
+            {
+                name: 'GET /api/characters/:characterid',
+                path: '/api/characters/1'
+            },
+        ]
+
+        protectedEnpoints.forEach(endpoint => {
+            describe(endpoint.name, () => {
+                // Test for when this header is missing or incorrect
+                it(`responds with 401 'Missing basic token' when no basic token`, () => {
+                    return supertest(app)
+                    .get(endpoint.path)
+                    .expect(401, { error: `Missing basic token` })
+                })
+                // Test for the protected endpoint when the token is present, but the credentials are missing
+                it(`responds 401 'Unauthorized request' when no credentials in token`, () => {
+                    const userNoCreds = { username: '', userpassword: '' }
+                    return supertest(app)
+                    .get(endpoint.path)
+                    .set('Authorization', makeAuthHeader(userNoCreds))
+                    .expect(401, { error: `Unauthorized request` })
+                })
+                // Test for credentials for a user that doesn't exist 
+                it(`responds 401 'Unauthorized request' when invalid user`, () => {
+                    const userInvalidCreds = { username: 'user-not', userpassword: 'existy' }
+                    return supertest(app)
+                        .get(endpoint.path)
+                        .set('Authorization', makeAuthHeader(userInvalidCreds))
+                        .expect(401, { error: `Unauthorized request` })
+                })
+                // Test when the username exists but the password is wrong
+                it(`responds 401 'Unauthorized request' when invalid password`, () => {
+                    const userInvalidPass = { username: testUsers[0].username, userpassword: 'wrong' }
+                    return supertest(app)
+                        .get(endpoint.path)
+                        .set('Authorization', makeAuthHeader(userInvalidPass))
+                        .expect(401, { error: `Unauthorized request` })
+                })
+            })
+        })
     })
 
     // Tests for when there are characters
@@ -92,98 +106,130 @@ describe.only(`Character endpoints`, () => {
         })
         context(`Given an XSS attack character`, () => {
             const { maliciousCharacter, expectedCharacter} = makeMaliciousCharacter()
+            const testUsers = makeUserArray();
 
             beforeEach('insert malicious article', () => {
                 return db
-                    .into('characters')
-                    .insert(maliciousCharacter)
+                    .into('users').insert(testUsers)
+                    .into('characters').insert(maliciousCharacter)
             })
 
             it(`removes XSS attack content`, () => {
                 return supertest(app)
                     .get(`/api/characters/${maliciousCharacter.characterid}`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(200, expectedCharacter)
             })
         })
     })
 
     describe(`POST /api/characters`, () => {
-        const testUsers = makeUserArray()
-
-        it(`creates a character, responding with 201 and the new character`, () => {
-            const testUser = testUsers[0]
-            const newCharacter = {
-                userid: 1,
-                characterrole: 'Chief Office',
-                charactername: 'Mr. Vulcan',
-                species: 'Vulcan',
-                attributes: [
-                    11, 10, 9, 9, 8, 7
-                ],
-                disciplines: [
-                    5, 4, 3, 3, 2, 2
-                ],
-                charactervalue: 'Smart',
-                equipment: 'Tricorder',
-            }
-            return supertest(app)
-            .post('/api/characters')
-            .send(newCharacter)
-            .expect(201)
-            .expect(res => {
-                expect(res.body.userid).to.eql(newCharacter.userid)
-                expect(res.body.characterrole).to.eql(newCharacter.characterrole)
-                expect(res.body.charactername).to.eql(newCharacter.charactername)
-                expect(res.body.species).to.eql(newCharacter.species)
-                expect(res.body.attributes).to.eql(newCharacter.attributes)
-                expect(res.body.disciplines).to.eql(newCharacter.disciplines)
-                expect(res.body.charactervalue).to.eql(newCharacter.charactervalue)
-                expect(res.body.equipment).to.eql(newCharacter.equipment)
-                expect(res.body).to.have.property('characterid')
-                expect(res.headers.location).to.eql(`/api/characters/${res.body.characterid}`)
-            })
-            .then(res => 
-                supertest(app)
-                    .get(`/api/characters/${res.body.characterid}`)
-                    .expect(res.body)
-            )
-        })
-
-        const requiredFields = [ 'userid', 'characterrole', 'charactername', 'species', 'attributes', 'disciplines', 'charactervalue', 'equipment']
-
-        requiredFields.forEach(field => {
-            const newCharacter = {
-                characterrole: 'Chief Office',
-                charactername: 'Mr. Vulcan',
-                species: 'Vulcan',
-                attributes: [
-                    11, 10, 9, 9, 8, 7
-                ],
-                disciplines: [
-                    5, 4, 3, 3, 2, 2
-                ],
-                charactervalue: 'Smart',
-                equipment: 'Tricorder',
-            }
-            
-            it(`responds with 400 and an error message when the '${field}' is missing`, () => {
-                delete newCharacter[field]
+        context(`Given the user posts a new character`, () => {
+            const testCharacters = makeCharacterArray();
+            const testUsers = makeUserArray();
     
+            beforeEach('insert characters and users', () => {
+                return db
+                    .into('users').into(testUsers)
+                    .into('characters').insert(testCharacters)
+            })
+            // Test one
+            it(`responds 401 'Unauthorized request' when invalid password`, () => {
+                  const userInvalidPass = { username: testUsers[0].username, userpassword: 'wrong' }
+                  return supertest(app)
+                    .post('/api/characters')
+                    .set('Authorization', makeAuthHeader(userInvalidPass))
+                    .expect(401, { error: `Unauthorized request` })
+            })
+            // Test Two
+            it(`creates a character, responding with 201 and the new character`, () => {
+                const testUser = testUsers[0]
+                const newCharacter = {
+                    characterrole: 'Chief Office',
+                    charactername: 'Mr. Vulcan',
+                    species: 'Vulcan',
+                    attributes: [
+                        11, 10, 9, 9, 8, 7
+                    ],
+                    disciplines: [
+                        5, 4, 3, 3, 2, 2
+                    ],
+                    charactervalue: 'Smart',
+                    equipment: 'Tricorder',
+                }
                 return supertest(app)
                     .post('/api/characters')
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .send(newCharacter)
-                    .expect(400, {
-                        error: { message: `Missing '${field}' in request body` }
+                    .expect(201)
+                    .expect(res => {
+                        expect(res.body.userid).to.eql(testUser.userid)
+                        expect(res.body.characterrole).to.eql(newCharacter.characterrole)
+                        expect(res.body.charactername).to.eql(newCharacter.charactername)
+                        expect(res.body.species).to.eql(newCharacter.species)
+                        expect(res.body.attributes).to.eql(newCharacter.attributes)
+                        expect(res.body.disciplines).to.eql(newCharacter.disciplines)
+                        expect(res.body.charactervalue).to.eql(newCharacter.charactervalue)
+                        expect(res.body.equipment).to.eql(newCharacter.equipment)
+                        expect(res.body).to.have.property('characterid')
+                        expect(res.headers.location).to.eql(`/api/characters/${res.body.characterid}`)
                     })
+                    .expect(res =>
+                        db
+                         .from('characters')
+                         .select('*')
+                         .where({ userid: res.body.userid})
+                         .first()
+                         .then(row => {
+                            expect(row.body.userid).to.eql(testUser.userid)
+                            expect(row.body.characterrole).to.eql(newCharacter.characterrole)
+                            expect(row.body.charactername).to.eql(newCharacter.charactername)
+                            expect(row.body.species).to.eql(newCharacter.species)
+                            expect(row.body.attributes).to.eql(newCharacter.attributes)
+                            expect(row.body.disciplines).to.eql(newCharacter.disciplines)
+                            expect(row.body.charactervalue).to.eql(newCharacter.charactervalue)
+                            expect(row.body.equipment).to.eql(newCharacter.equipment)
+                        })    
+                    )
+            })
+
+            const requiredFields = [ 'characterrole', 'charactername', 'species', 'attributes', 'disciplines', 'charactervalue', 'equipment']
+
+            requiredFields.forEach(field => {
+                const newCharacter = {
+                    characterrole: 'Chief Office',
+                    charactername: 'Mr. Vulcan',
+                    species: 'Vulcan',
+                    attributes: [
+                        11, 10, 9, 9, 8, 7
+                    ],
+                    disciplines: [
+                        5, 4, 3, 3, 2, 2
+                    ],
+                    charactervalue: 'Smart',
+                    equipment: 'Tricorder',
+                }
+                
+            it(`responds with 400 and an error message when the '${field}' is missing`, () => {
+                    delete newCharacter[field]
+        
+                    return supertest(app)
+                        .post('/api/characters')
+                        .set('Authorization', makeAuthHeader(testUsers[0]))
+                        .send(newCharacter)
+                        .expect(400, {
+                            error: { message: `Missing '${field}' in request body` }
+                        })
+                })
             })
         })
     })
 
-    describe.only(`GET /api/characters/:characterid`, () => {
+    describe(`GET /api/characters/:characterid`, () => {
         context(`Given no characters`, () => {
             const testUsers = makeUserArray();
             const testCharacters = makeCharacterArray();
-            
+
             beforeEach('insert users', () => {
                 return db
                     .into('users').insert(testUsers)
@@ -245,8 +291,8 @@ describe.only(`Character endpoints`, () => {
             const testUsers = makeUserArray()
             beforeEach('insert characters', () => {
                 return db
-                    .into('characters')
-                    .insert(testCharacters)
+                    .into('users').insert(testUsers)
+                    .into('characters').insert(testCharacters)
             })
 
             it('responds with 204 and removes the character', () => {
@@ -254,6 +300,7 @@ describe.only(`Character endpoints`, () => {
                 const expectedCharacters = testCharacters.filter(character => character.characterid !== idToRemove)
                 return supertest(app)
                     .delete(`/api/characters/${idToRemove}`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(204)
                     .then(res => 
                         supertest(app)
@@ -264,12 +311,19 @@ describe.only(`Character endpoints`, () => {
         })
 
         context(`Given no characters`, () => {
+            const testCharacters = makeCharacterArray()
             const testUsers = makeUserArray()
+            beforeEach('insert characters', () => {
+                return db
+                    .into('users').insert(testUsers)
+                    .into('characters').insert(testCharacters)
+            })
 
             it(`responds with 404`, () => {
                 const characterId = 123456
                 return supertest(app)
                     .delete(`/api/characters/${characterId}`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(404, {
                         error: { message: `Character does not exist` }
                     })
@@ -279,12 +333,19 @@ describe.only(`Character endpoints`, () => {
 
     describe(`PATCH /api/characters/:characterid`, () => {
         context(`Given no characters`, () => {
+            const testCharacters = makeCharacterArray()
             const testUsers = makeUserArray()
+            beforeEach('insert characters', () => {
+                return db
+                    .into('users').insert(testUsers)
+                    .into('characters').insert(testCharacters)
+            })
 
             it(`responds wiht 404`, () => {
                 const characterId = 123456
                 return supertest(app)
                     .patch(`/api/characters/${characterId}`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(404, {
                         error: { message: `Character does not exist` }
                     })
@@ -296,9 +357,10 @@ describe.only(`Character endpoints`, () => {
             const testUsers = makeUserArray()
             beforeEach('insert characters', () => {
                 return db
-                    .into('characters')
-                    .insert(testCharacters)
+                    .into('users').insert(testUsers)
+                    .into('characters').insert(testCharacters)
             })
+
             it(`responds with 204 and updates the character`, () => {
                 const idOfCharacterToUpdate = 2
                 const updateCharacter = {
@@ -322,11 +384,13 @@ describe.only(`Character endpoints`, () => {
 
                 return supertest(app)
                     .patch(`/api/characters/${idOfCharacterToUpdate}`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .send(updateCharacter)
                     .expect(204)
                     .then(res => 
                         supertest(app)
                             .get(`/api/characters/${idOfCharacterToUpdate}`)
+                            .set('Authorization', makeAuthHeader(testUsers[0]))
                             .expect(expectedCharacter)
                     )
             })
@@ -335,6 +399,7 @@ describe.only(`Character endpoints`, () => {
                 const idOfCharacterToUpdate = 2
                 return supertest(app)
                     .patch(`/api/characters/${idOfCharacterToUpdate}`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .send({ irreleventField: 'foo' })
                     .expect(400, {
                         error: { 
@@ -355,6 +420,7 @@ describe.only(`Character endpoints`, () => {
             
                 return supertest(app)
                     .patch(`/api/characters/${idOfCharacterToUpdate}`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .send({
                         ...updateCharacter,
                         fieldToIgnore: 'should not be in GET response'
@@ -363,6 +429,7 @@ describe.only(`Character endpoints`, () => {
                     .then(res =>
                         supertest(app)
                             .get(`/api/characters/${idOfCharacterToUpdate}`)
+                            .set('Authorization', makeAuthHeader(testUsers[0]))
                             .expect(expectedCharacter)
                     )
                 })
