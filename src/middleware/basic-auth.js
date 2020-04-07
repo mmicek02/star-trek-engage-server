@@ -13,16 +13,18 @@ function requireAuth(req, res, next) {
         .toString()
         .split(':')
     
+    console.log(tokenUserName)
+
     if (!tokenUserName || !tokenUserPassword) {
         return res.status(401).json({ error: 'Unauthorized request' })
     }
-
+    // next()
     req.app.get('db')('users')
         .where({ username: tokenUserName })
         .first()
         .then(user => {
             if (!user) {
-                return res.status(401).json({ error: 'Unauthorized request'})
+                return res.status(401).json({ error: 'Unauthorized request' })
             }
             
             next()

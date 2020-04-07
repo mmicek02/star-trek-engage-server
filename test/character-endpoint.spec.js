@@ -22,14 +22,15 @@ describe.only(`Character endpoints`, () => {
     after(() => db.destroy())
 
     before(() => db('characters').truncate())
-
+    
     afterEach(() => db('characters').truncate())
+
 
     describe.only(`Protected endpoints`, () => {
         const testCharacters = makeCharacterArray();
         const testUsers = makeUserArray();
 
-        beforeEach('insert characters', () => {
+        beforeEach('insert characters and users', () => {
             return db
                 .into('users').into(testUsers)
                 .into('characters').insert(testCharacters)
@@ -37,6 +38,7 @@ describe.only(`Character endpoints`, () => {
         })
        
         describe(`GET /api/characters/:characterid`, () => {
+            console.log(testUsers[0])
             // Test for when this header is missing or incorrect
             it(`responds with 401 'Missing basic token' when no basic token`, () => {
                 return supertest(app)
@@ -180,11 +182,10 @@ describe.only(`Character endpoints`, () => {
     describe.only(`GET /api/characters/:characterid`, () => {
         context(`Given no characters`, () => {
             const testUsers = makeUserArray();
-            //const testCharacters = makeCharacterArray();
 
             beforeEach('insert users', () => {
                 return db
-                    .into('users').into(testUsers)
+                    .into('users').insert(testUsers)
             })
 
             it(`responds with 404 and give an error`, () => {
@@ -200,10 +201,11 @@ describe.only(`Character endpoints`, () => {
         context('Given there are characters in the database', () => {
             const testCharacters = makeCharacterArray()
             const testUsers = makeUserArray()
+            
             beforeEach('insert characters', () => {
                 return db
-                    .into('characters')
-                    .insert(testCharacters)
+                    .into('users').insert(testUsers)
+                    .into('characters').insert(testCharacters)
             })
 
             it('responds with 200 and the specified article', () => {

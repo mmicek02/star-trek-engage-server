@@ -2,18 +2,18 @@ function makeUserArray() {
     return [
         {
             userid: 1,
-            username: "Mike",
-            userpassword: "password",
+            username: "Ty Keobernick",
+            userpassword: "te$TpaS$oRd",
         },
         {
             userid: 2,
-            username: "Larry",
-            userpassword: "password",
+            username: "Michael Micek",
+            userpassword: "NEWte$TpaS$oRd",
         },
         {
             userid: 3,
-            username: "Ty",
-            userpassword: "hidden",
+            username: "New User",
+            userpassword: "nEwUserpA$$",
         }
     ]
 }
