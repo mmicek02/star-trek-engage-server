@@ -2,6 +2,7 @@ const path = require('path')
 const express = require('express');
 const CharacterService = require('./character-service');
 const { requireAuth } = require('../middleware/basic-auth')
+
 const characterRouter = express.Router()
 const jsonParser = express.json()
 
@@ -19,7 +20,6 @@ const serializeCharacter = character => ({
 
 characterRouter
     .route('/')
-    .all(requireAuth)
     .get((req, res, next) => {
         const knexIntance = req.app.get('db')
         CharacterService.getAllCharacters(knexIntance)
@@ -29,8 +29,8 @@ characterRouter
             .catch(next) 
     })
     .post(requireAuth, jsonParser, (req, res, next) => {
-        const { characterrole, charactername, species, attributes, disciplines, charactervalue, equipment } = req.body;
-        const newCharacter = { characterrole, charactername, species, attributes, disciplines, charactervalue, equipment };
+        const { userid, characterrole, charactername, species, attributes, disciplines, charactervalue, equipment } = req.body;
+        const newCharacter = { userid, characterrole, charactername, species, attributes, disciplines, charactervalue, equipment };
         
         for (const [key, value] of Object.entries(newCharacter)) {
             if (value == null) {
