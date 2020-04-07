@@ -182,10 +182,12 @@ describe.only(`Character endpoints`, () => {
     describe.only(`GET /api/characters/:characterid`, () => {
         context(`Given no characters`, () => {
             const testUsers = makeUserArray();
-
+            const testCharacters = makeCharacterArray();
+            
             beforeEach('insert users', () => {
                 return db
                     .into('users').insert(testUsers)
+                    .into('characters').insert(testCharacters)
             })
 
             it(`responds with 404 and give an error`, () => {
