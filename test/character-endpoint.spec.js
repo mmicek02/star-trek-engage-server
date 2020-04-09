@@ -2,6 +2,7 @@ const knex = require('knex');
 const app = require('../src/app');
 const { makeUserArray } = require('./users.fixture');
 const { makeCharacterArray, makeMaliciousCharacter } = require('./character.fixture');
+const bcrypt = require('bcryptjs')
 
 describe(`Character endpoints`, () => {
     let db
@@ -9,6 +10,21 @@ describe(`Character endpoints`, () => {
     function makeAuthHeader(user) {
         const token = Buffer.from(`${user.username}:${user.userpassword}`).toString('base64')
         return `Basic ${ token }`
+    }
+
+    function seedUsers(db, users) {
+        const preppedUsers = users.map(user => ({
+            ...user,
+            password: bcrypt.hashSync(user.password, 1)
+        }))
+        return db.into('users').insert(preppedUsers)
+            .then(() =>
+              // update the auto sequence to stay in sync
+              db.raw(
+                `SELECT setval('users_userid_seq', ?)`,
+                [users[users.length - 1].id],
+              )
+            )
     }
 
     before(() => {
@@ -231,11 +247,9 @@ describe(`Character endpoints`, () => {
             const testUsers = makeUserArray();
             const testCharacters = makeCharacterArray();
 
-            beforeEach('insert users', () => {
-                return db
-                    .into('users').insert(testUsers)
-                    .into('characters').insert(testCharacters)
-            })
+            beforeEach('insert users', () => 
+                seedUsers(db, testUsers)
+            )
 
             it(`responds with 404 and give an error`, () => {
                 const characterId = 123456
@@ -290,11 +304,9 @@ describe(`Character endpoints`, () => {
         context(`Given there are characters in the database`, () => {
             const testCharacters = makeCharacterArray()
             const testUsers = makeUserArray()
-            beforeEach('insert characters', () => {
-                return db
-                    .into('users').insert(testUsers)
-                    .into('characters').insert(testCharacters)
-            })
+            beforeEach('insert characters', () => 
+                seedUsers(db, testUsers)
+            )
 
             it('responds with 204 and removes the character', () => {
                 const idToRemove = 2
@@ -314,11 +326,9 @@ describe(`Character endpoints`, () => {
         context(`Given no characters`, () => {
             const testCharacters = makeCharacterArray()
             const testUsers = makeUserArray()
-            beforeEach('insert characters', () => {
-                return db
-                    .into('users').insert(testUsers)
-                    .into('characters').insert(testCharacters)
-            })
+            beforeEach('insert characters', () => 
+                seedUsers(db, testUsers)
+            )
 
             it(`responds with 404`, () => {
                 const characterId = 123456
