@@ -4,6 +4,12 @@ const { makeUserArray } = require('./users.fixture');
 const { makeCharacterArray, makeMaliciousCharacter } = require('./character.fixture');
 const bcrypt = require('bcryptjs')
 
+const testUsers = makeUserArray();
+const encryptedUsers = testUsers.map(u => ({ userid: u.userid, username: u.username, userpassword: bcrypt.hashSync(u.userpassword, 4) }))
+const testCharacters = makeCharacterArray();
+
+
+
 describe(`Character endpoints`, () => {
     let db
 
@@ -12,20 +18,20 @@ describe(`Character endpoints`, () => {
         return `Basic ${ token }`
     }
 
-    function seedUsers(db, users) {
-        const preppedUsers = users.map(user => ({
-            ...user,
-            password: bcrypt.hashSync(user.password, 1)
-        }))
-        return db.into('users').insert(preppedUsers)
-            .then(() =>
-              // update the auto sequence to stay in sync
-              db.raw(
-                `SELECT setval('users_userid_seq', ?)`,
-                [users[users.length - 1].id],
-              )
-            )
-    }
+    // function seedUsers(db, users) {
+    //     const preppedUsers = users.map(user => ({
+    //         ...user,
+    //         password: bcrypt.hashSync(user.password, 1)
+    //     }))
+    //     return db.into('users').insert(preppedUsers)
+    //         .then(() =>
+    //           // update the auto sequence to stay in sync
+    //           db.raw(
+    //             `SELECT setval('users_userid', ?)`,
+    //             [users[users.length - 1].id],
+    //           )
+    //         )
+    // }
 
     before(() => {
         db = knex({
@@ -42,9 +48,6 @@ describe(`Character endpoints`, () => {
     afterEach(() => db('characters').truncate())
 
     describe(`Protected endpoints`, () => {
-
-        const testCharacters = makeCharacterArray();
-        const testUsers = makeUserArray();
 
         beforeEach('insert characters', () => {
             return db
@@ -106,7 +109,7 @@ describe(`Character endpoints`, () => {
             })
         })
         context(`Given 'characters' has data`, () => {
-            const testCharacters = makeCharacterArray()
+        
 
             beforeEach('insert characters', () => {
                 return db
@@ -122,7 +125,6 @@ describe(`Character endpoints`, () => {
         })
         context(`Given an XSS attack character`, () => {
             const { maliciousCharacter, expectedCharacter} = makeMaliciousCharacter()
-            const testUsers = makeUserArray();
 
             beforeEach('insert malicious article', () => {
                 return db
@@ -141,8 +143,7 @@ describe(`Character endpoints`, () => {
 
     describe(`POST /api/characters`, () => {
         context(`Given the user posts a new character`, () => {
-            const testCharacters = makeCharacterArray();
-            const testUsers = makeUserArray();
+            
     
             beforeEach('insert characters and users', () => {
                 return db
@@ -244,12 +245,12 @@ describe(`Character endpoints`, () => {
 
     describe(`GET /api/characters/:characterid`, () => {
         context(`Given no characters`, () => {
-            const testUsers = makeUserArray();
-            const testCharacters = makeCharacterArray();
-
-            beforeEach('insert users', () => 
-                seedUsers(db, testUsers)
-            )
+            
+            beforeEach('insert characters', () => {
+                return db
+                 .into('users').insert(testUsers)
+                 .into('characters').insert(testCharacters)
+            })
 
             it(`responds with 404 and give an error`, () => {
                 const characterId = 123456
@@ -262,7 +263,7 @@ describe(`Character endpoints`, () => {
             })
         })
         context('Given there are characters in the database', () => {
-            const testCharacters = makeCharacterArray()
+        
             const testUsers = makeUserArray()
             
             beforeEach('insert characters', () => {
@@ -300,13 +301,15 @@ describe(`Character endpoints`, () => {
         })
     })
 
-    describe(`DELETE /api/characters/:characterid`, () => {
+    describe.only(`DELETE /api/characters/:characterid`, () => {
         context(`Given there are characters in the database`, () => {
-            const testCharacters = makeCharacterArray()
-            const testUsers = makeUserArray()
-            beforeEach('insert characters', () => 
-                seedUsers(db, testUsers)
-            )
+        
+            
+            beforeEach('insert characters', () => {
+                return db
+                 .into('users').insert(encryptedUsers)
+                 .into('characters').insert(testCharacters)
+            })
 
             it('responds with 204 and removes the character', () => {
                 const idToRemove = 2
@@ -324,11 +327,13 @@ describe(`Character endpoints`, () => {
         })
 
         context(`Given no characters`, () => {
-            const testCharacters = makeCharacterArray()
-            const testUsers = makeUserArray()
-            beforeEach('insert characters', () => 
-                seedUsers(db, testUsers)
-            )
+        
+            
+            beforeEach('insert characters', () => {
+                return db
+                 .into('users').insert(encryptedUsers)
+                 .into('characters').insert(testCharacters)
+            })
 
             it(`responds with 404`, () => {
                 const characterId = 123456
@@ -344,7 +349,7 @@ describe(`Character endpoints`, () => {
 
     describe(`PATCH /api/characters/:characterid`, () => {
         context(`Given no characters`, () => {
-            const testCharacters = makeCharacterArray()
+        
             const testUsers = makeUserArray()
             beforeEach('insert characters', () => {
                 return db
@@ -364,7 +369,7 @@ describe(`Character endpoints`, () => {
         })
 
         context(`Given there are characters in the database`, () => {
-            const testCharacters = makeCharacterArray()
+        
             const testUsers = makeUserArray()
             beforeEach('insert characters', () => {
                 return db
