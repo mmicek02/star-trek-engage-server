@@ -73,6 +73,7 @@ describe.only('Auth Endpoints', function() {
             username: testUser.username,
             userpassword: testUser.userpassword,
         }
+        console.log(userValidCreds);
         const expectedToken = jwt.sign(
             { userid: testUser.userid }, // payload
             process.env.JWT_SECRET,
@@ -81,6 +82,7 @@ describe.only('Auth Endpoints', function() {
                 algorithm: 'HS256',
             }
         )
+        console.log('expectedToken ' + expectedToken);
         return supertest(app)
             .post('/api/auth/login')
             .send(userValidCreds)
