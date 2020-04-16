@@ -8,7 +8,7 @@ authRouter
     .post('/login', jsonBodyParser, (req, res, next) => {
         const { username, userpassword } = req.body
         const loginUser = { username, userpassword }
-
+        console.log(loginUser)
         for (const [key, value] of Object.entries(loginUser)) 
             if (value == null )
                 return res.status(400).json({
@@ -32,11 +32,19 @@ authRouter
                                 error: 'Incorrect username or password',
                     })
 
-                    const sub = dbUser.username
-                    const payload = { userid: dbUser.userid }
-                    res.send({
-                        authToken: AuthService.createJwt(sub, payload),
-                    })
+                    return AuthService.comparePasswords(loginUser.userpassword, dbUser.userpassword)
+                        .then(compareMatch => {
+                            if (!compareMatch)
+                                return res.status(400).json({
+                                    error: 'Incorrect username or password'
+                                })
+
+                                const sub = dbUser.userpassword
+                                const payload = { userid: dbUser.userid }
+                                res.send({
+                                    authToken: AuthService.createJwt(sub, payload)
+                                })
+                        })
                    })
         })
         .catch(next)

@@ -301,7 +301,7 @@ describe(`Character endpoints`, () => {
         })
     })
 
-    describe.only(`DELETE /api/characters/:characterid`, () => {
+    describe(`DELETE /api/characters/:characterid`, () => {
         context(`Given there are characters in the database`, () => {
         
             
