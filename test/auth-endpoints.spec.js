@@ -1,16 +1,16 @@
 const knex = require("knex");
 const jwt = require('jsonwebtoken')
 const app = require('../src/app')
-const { makeUserArray } = require('./users.fixture');
+const { makeUserArray, makePlainUserArray } = require('./users.fixture');
 const { makeCharacterArray, makeMaliciousCharacter } = require('./character.fixture');
 
 describe.only('Auth Endpoints', function() {
     let db
-
+    const plainUsers = makePlainUserArray();
     const testUsers = makeUserArray();
-    const testUser = testUsers[0];
+    const testUser = plainUsers[0];
     const testCharacters = makeCharacterArray();
-
+    console.log(process.env.TEST_DATABASE_URL)
     before(() => {
         db = knex({
             client: 'pg',
@@ -19,16 +19,21 @@ describe.only('Auth Endpoints', function() {
         app.set('db', db)
     })
 
-    after(() => db.destroy())
+    after(async () => {
+        await db('users').whereIn('username', testUsers.map(u => u.username)).del()
+        db.destroy()
+    })
 
     before(() => db('characters').truncate())
-    
+    before(() => db.into('users').insert(testUsers))
+
+    //after(() => db('users').where(1,1).del())
     afterEach(() => db('characters').truncate())
 
     describe(`POST /api/auth/login`, () => {
         beforeEach('insert characters', () => {
             return db
-             .into('users').into(testUsers)
+             //.into('users').insert(testUsers)
              .into('characters').insert(testCharacters)
         })
     

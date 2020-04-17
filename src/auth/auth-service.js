@@ -9,7 +9,7 @@ const AuthService = {
             .first()
     },
     comparePasswords(userpassword, hash) {
-        return bcrypt.compare(userpassword, hash)
+        return bcrypt.compare(userpassword, hash )
     },
     createJwt(subject, payload) {
         return jwt.sign(payload, config.JWT_SECRET, {

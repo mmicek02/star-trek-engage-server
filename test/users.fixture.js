@@ -1,4 +1,6 @@
-function makeUserArray() {
+const bcrypt = require('bcryptjs')
+
+function makePlainUserArray() {
     return [
         {
             userid: 1,
@@ -17,7 +19,10 @@ function makeUserArray() {
         }
     ]
 }
-
+function makeUserArray() {
+    return makePlainUserArray().map(u => ({...u, userpassword: bcrypt.hashSync(u.userpassword, 4) }));
+}
 module.exports = {
+    makePlainUserArray,
     makeUserArray
 };
