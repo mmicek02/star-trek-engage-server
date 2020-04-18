@@ -3,9 +3,9 @@ function makeCharacterArray() {
         {
             characterid: 3,
             userid: 1,
-            characterrole: 'Chief Engineer',
-            charactername: 'Captain Ty',
-            species: 'human',
+            characterrole: 'Chief Office',
+            charactername: 'Mr. Vulcan',
+            species: 'Vulcan',
             attributes: [
                 11, 10, 9, 9, 8, 7
             ],
@@ -13,7 +13,7 @@ function makeCharacterArray() {
                 5, 4, 3, 3, 2, 2
             ],
             charactervalue: 'Smart',
-            equipment: 'phaser'
+            equipment: 'Tricorder',
         },
         {
             characterid: 2,

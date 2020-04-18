@@ -11,7 +11,7 @@ const testCharacters = makeCharacterArray();
 
 
 
-describe.only(`Character endpoints`, () => {
+describe(`Character endpoints`, () => {
     let db
 
     function makeAuthHeader(user, secret = process.env.JWT_SECRET) {
@@ -139,14 +139,16 @@ describe.only(`Character endpoints`, () => {
             // Test one
             it(`responds 401 'Missing bearer token' when invalid password`, () => {
                   const userInvalidPass = { username: testUsers[0].username, userpassword: 'wrong' }
+                  const validUser = testUsers[0]
+                  const invalidSecret = 'bad-secret'
                   return supertest(app)
                     .post('/api/characters')
-                    .set('Authorization', makeAuthHeader(userInvalidPass))
-                    .expect(401, { error: `Missing bearer token` })
+                    .set('Authorization', makeAuthHeader(validUser, invalidSecret))
+                    .expect(401, { error: `Unauthorized request` })
             })
             // Test Two
             it(`creates a character, responding with 201 and the new character`, () => {
-
+                
                 const testUser = testUsers[0]
                 const newCharacter = {
                     characterrole: 'Chief Office',
@@ -185,16 +187,16 @@ describe.only(`Character endpoints`, () => {
                          .where({ userid: res.body.userid})
                          .first()
                          .then(row => {
-                            expect(row.body.userid).to.eql(testUser.userid)
-                            expect(row.body.characterrole).to.eql(newCharacter.characterrole)
-                            expect(row.body.charactername).to.eql(newCharacter.charactername)
-                            expect(row.body.species).to.eql(newCharacter.species)
-                            expect(row.body.attributes).to.eql(newCharacter.attributes)
-                            expect(row.body.disciplines).to.eql(newCharacter.disciplines)
-                            expect(row.body.charactervalue).to.eql(newCharacter.charactervalue)
-                            expect(row.body.equipment).to.eql(newCharacter.equipment)
+                            expect(row.userid).to.eql(testUser.userid)
+                            expect(row.characterrole).to.eql(newCharacter.characterrole)
+                            expect(row.charactername).to.eql(newCharacter.charactername)
+                            expect(row.species).to.eql(newCharacter.species)
+                            expect(row.attributes).to.eql(newCharacter.attributes)
+                            expect(row.disciplines).to.eql(newCharacter.disciplines)
+                            expect(row.charactervalue).to.eql(newCharacter.charactervalue)
+                            expect(row.equipment).to.eql(newCharacter.equipment)
                         })    
-                    )
+                    ) 
             })
 
             const requiredFields = [ 'characterrole', 'charactername', 'species', 'attributes', 'disciplines', 'charactervalue', 'equipment']
