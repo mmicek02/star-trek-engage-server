@@ -4,7 +4,7 @@ const app = require('../src/app')
 const { makeUserArray, makePlainUserArray } = require('./users.fixture');
 const { makeCharacterArray, makeMaliciousCharacter } = require('./character.fixture');
 
-describe.only('Auth Endpoints', function() {
+describe('Auth Endpoints', function() {
     let db
     const plainUsers = makePlainUserArray();
     const testUsers = makeUserArray();

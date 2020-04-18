@@ -3,6 +3,7 @@ const app = require('../src/app');
 const { makeUserArray } = require('./users.fixture');
 const { makeCharacterArray, makeMaliciousCharacter } = require('./character.fixture');
 const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 
 const testUsers = makeUserArray();
 const encryptedUsers = testUsers.map(u => ({ userid: u.userid, username: u.username, userpassword: bcrypt.hashSync(u.userpassword, 4) }))
@@ -13,25 +14,13 @@ const testCharacters = makeCharacterArray();
 describe(`Character endpoints`, () => {
     let db
 
-    function makeAuthHeader(user) {
-        const token = Buffer.from(`${user.username}:${user.userpassword}`).toString('base64')
-        return `Basic ${ token }`
+    function makeAuthHeader(user, secret = process.env.JWT_SECRET) {
+        const token = jwt.sign({ userid: user.userid }, secret, {
+            subject: user.username,
+            algorithm: 'HS256',
+        })
+        return `Bearer ${token}`
     }
-
-    // function seedUsers(db, users) {
-    //     const preppedUsers = users.map(user => ({
-    //         ...user,
-    //         password: bcrypt.hashSync(user.password, 1)
-    //     }))
-    //     return db.into('users').insert(preppedUsers)
-    //         .then(() =>
-    //           // update the auto sequence to stay in sync
-    //           db.raw(
-    //             `SELECT setval('users_userid', ?)`,
-    //             [users[users.length - 1].id],
-    //           )
-    //         )
-    // }
 
     before(() => {
         db = knex({
@@ -41,9 +30,13 @@ describe(`Character endpoints`, () => {
         app.set('db', db)
     })
 
-    after(() => db.destroy())
+    after(async () => {
+        await db('users').whereIn('username', testUsers.map(u => u.username)).del()
+        db.destroy()
+    })
 
     before(() => db('characters').truncate())
+    before(() => db.into('users').insert(testUsers))
     
     afterEach(() => db('characters').truncate())
 
@@ -65,33 +58,26 @@ describe(`Character endpoints`, () => {
         protectedEnpoints.forEach(endpoint => {
             describe(endpoint.name, () => {
                 // Test for when this header is missing or incorrect
-                it(`responds with 401 'Missing basic token' when no basic token`, () => {
+                it(`responds with 401 'Missing bearer token' when no bearer token`, () => {
                     return supertest(app)
                     .get(endpoint.path)
-                    .expect(401, { error: `Missing basic token` })
+                    .expect(401, { error: `Missing bearer token` })
                 })
                 // Test for the protected endpoint when the token is present, but the credentials are missing
-                it(`responds 401 'Unauthorized request' when no credentials in token`, () => {
-                    const userNoCreds = { username: '', userpassword: '' }
+                it(`responds 401 'Unauthorized request' when invalid JWT secret`, () => {
+                    const validUser = testUsers[0]
+                    const invalidSecret = 'bad-secret'
                     return supertest(app)
                     .get(endpoint.path)
-                    .set('Authorization', makeAuthHeader(userNoCreds))
+                    .set('Authorization', makeAuthHeader(validUser, invalidSecret))
                     .expect(401, { error: `Unauthorized request` })
                 })
                 // Test for credentials for a user that doesn't exist 
-                it(`responds 401 'Unauthorized request' when invalid user`, () => {
-                    const userInvalidCreds = { username: 'user-not', userpassword: 'existy' }
+                it(`responds 401 'Unauthorized request' when invalid sub in payload`, () => {
+                    const invalidUser = { username: 'user-not', userid: 1 }
                     return supertest(app)
                         .get(endpoint.path)
-                        .set('Authorization', makeAuthHeader(userInvalidCreds))
-                        .expect(401, { error: `Unauthorized request` })
-                })
-                // Test when the username exists but the password is wrong
-                it(`responds 401 'Unauthorized request' when invalid password`, () => {
-                    const userInvalidPass = { username: testUsers[0].username, userpassword: 'wrong' }
-                    return supertest(app)
-                        .get(endpoint.path)
-                        .set('Authorization', makeAuthHeader(userInvalidPass))
+                        .set('Authorization', makeAuthHeader(invalidUser))
                         .expect(401, { error: `Unauthorized request` })
                 })
             })
@@ -147,16 +133,16 @@ describe(`Character endpoints`, () => {
     
             beforeEach('insert characters and users', () => {
                 return db
-                    .into('users').into(testUsers)
+                    .into('users').insert(testUsers)
                     .into('characters').insert(testCharacters)
             })
             // Test one
-            it(`responds 401 'Unauthorized request' when invalid password`, () => {
+            it(`responds 401 'Missing bearer token' when invalid password`, () => {
                   const userInvalidPass = { username: testUsers[0].username, userpassword: 'wrong' }
                   return supertest(app)
                     .post('/api/characters')
                     .set('Authorization', makeAuthHeader(userInvalidPass))
-                    .expect(401, { error: `Unauthorized request` })
+                    .expect(401, { error: `Missing bearer token` })
             })
             // Test Two
             it(`creates a character, responding with 201 and the new character`, () => {

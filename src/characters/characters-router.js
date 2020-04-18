@@ -1,7 +1,7 @@
 const path = require('path')
 const express = require('express');
 const CharacterService = require('./character-service');
-const { requireAuth } = require('../middleware/basic-auth')
+const { requireAuth } = require('../middleware/jwt-auth')
 
 const characterRouter = express.Router()
 const jsonParser = express.json()
