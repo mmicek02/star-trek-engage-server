@@ -5,6 +5,9 @@ const { makeUserArray } = require('./users.fixture');
 describe(`User Endpoints`, () => {
     let db 
 
+    const testUsers = makeUserArray();
+    const testUser = testUsers[0];
+    
     before(() => {
         db = knex({
             client: 'pg',
@@ -115,6 +118,73 @@ describe(`User Endpoints`, () => {
                     .expect(400, {
                         error: { message: `Missing '${field}' in request body` }
                     })
+            })
+
+            it(`responds 400 'Password must be longer than 8 characters' when empty password`, () => {
+                const userShortPassword = {
+                    username: 'test user_name',
+                    userpassword: '1234567',
+                }
+                return supertest(app)
+                    .post('/api/users')
+                    .send(userShortPassword)
+                    .expect(400, { error: `Password must be longer than 8 characters` })
+            })
+
+            it(`responds 400 'Password must be less than 72 characters' when long password`, () => {
+                  const userLongPassword = {
+                    username: 'test user_name',
+                    userpassword: '*'.repeat(73),
+                  }
+                  return supertest(app)
+                    .post('/api/users')
+                    .send(userLongPassword)
+                    .expect(400, { error: `Password must be less than 72 characters` })
+            })
+
+            it(`responds 400 error when password starts with spaces`, () => {
+                const userPasswordStartsSpaces = {
+                    username: 'test user_name',
+                    userpassword: ' 1Aa!2Bb@',
+                }
+                return supertest(app)
+                    .post('/api/users')
+                    .send(userPasswordStartsSpaces)
+                    .expect(400, { error: `Password must not start or end with empty spaces` })
+            })
+
+            it(`responds 400 error when password ends with spaces`, () => {
+                const userPasswordEndsSpaces = {
+                    username: 'test user_name',
+                    userpassword: '1Aa!2Bb@ ',
+                }
+                return supertest(app)
+                    .post('/api/users')
+                    .send(userPasswordEndsSpaces)
+                    .expect(400, { error: `Password must not start or end with empty spaces` })
+            })
+
+            it(`responds 400 error when password isn't complex enough`, () => {
+                const userPasswordNotComplex = {
+                    username: 'test user_name',
+                    userpassword: '11AAaabb',
+                }
+                return supertest(app)
+                    .post('/api/users')
+                    .send(userPasswordNotComplex)
+                .   expect(400, { error: `Password must contain 1 upper case, lower case, number and special character` })
+            })
+
+            it(`responds 400 'Username already taken' when username isn't unique`, () => {
+                const duplicateUser = {
+                    username: testUser.username,
+                    userpassword: '11AAaa!!',
+                }
+                console.log(duplicateUser)
+                return supertest(app)
+                    .post('/api/users')
+                    .send(duplicateUser)
+                    .expect(400, { error: `Username already taken` })
             })
         })
     })

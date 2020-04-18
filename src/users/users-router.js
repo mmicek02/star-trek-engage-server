@@ -32,6 +32,29 @@ userRouter
                 })
             }
         }
+
+        const passwordError = UsersService.validatePassword(userpassword)
+        
+        if (passwordError)
+            return res.status(400).json({ error: passwordError })
+        
+        UsersService.hasUserWithUserName(
+            req.app.get('db'),
+            username
+        )
+            .then(hasUserWithUserName => {
+                if(hasUserWithUserName)
+                    return res.status(400).json({ error: `Username already taken` })
+            
+                    res.status(201)
+                        .location(path.posix.join(req.originalUrl, `/whatever`))
+                        .json({
+                            id: 'whatever',
+                            username,
+                            date_created: Date.now(),
+                    })
+            })   
+            .catch(next) 
         
         UsersService.insertUser(
             req.app.get('db'),

@@ -11,7 +11,7 @@ const testCharacters = makeCharacterArray();
 
 
 
-describe(`Character endpoints`, () => {
+describe.only(`Character endpoints`, () => {
     let db
 
     function makeAuthHeader(user, secret = process.env.JWT_SECRET) {
