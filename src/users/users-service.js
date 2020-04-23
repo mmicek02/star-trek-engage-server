@@ -1,4 +1,6 @@
 const bcrypt = require('bcryptjs')
+const xss = require('xss')
+
 const REGEX_UPPER_LOWER_NUMBER_SPECIAL = /(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&])[\S]+/
 
 const UsersService = {
@@ -31,8 +33,9 @@ const UsersService = {
             .where({ userid })
             .update(newUserFields)
     },
-    hasUserWithUserName(db, username) {
-        return db('users')
+    hasUserWithUserName(knex, username) {
+        return knex
+            .from('users')
             .where({ username })
             .first()
             .then(user => !!user)
@@ -55,6 +58,13 @@ const UsersService = {
     hashPassword(password) {
         return bcrypt.hash(password, 12)
     },
+    serializeUser(user) {
+        return {
+            userid: user.userid,
+            username: xss(user.username),
+            userpassword: user.userpassword,
+        }
+    }
 };
 
 module.exports = UsersService;

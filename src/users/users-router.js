@@ -1,8 +1,10 @@
 const path = require('path')
 const express = require('express');
 const UsersService = require('./users-service');
+
 const userRouter = express.Router()
 const jsonParser = express.json()
+
 const bcrypt = require('bcryptjs')
 
 const serializeUser = user => ({
@@ -23,7 +25,7 @@ userRouter
     })
     .post(jsonParser, (req, res, next) => {
         const { username, userpassword } = req.body;
-        const newUser = { username, userpassword: bcrypt.hashSync(userpassword, 4) };
+        const newUser = { username, userpassword: userpassword };
         
         for (const [key, value] of Object.entries(newUser)) {
             if (value == null) {
@@ -43,29 +45,28 @@ userRouter
             username
         )
             .then(hasUserWithUserName => {
-                if(hasUserWithUserName)
+                if (hasUserWithUserName)
                     return res.status(400).json({ error: `Username already taken` })
             
-                    res.status(201)
-                        .location(path.posix.join(req.originalUrl, `/whatever`))
-                        .json({
-                            id: 'whatever',
+                return UsersService.hashPassword(password)
+                    .then(hashPassword => {
+                        const newUser = {
                             username,
-                            date_created: Date.now(),
+                            userpassword: hashPassword,
+                        }
+
+                return UsersService.insertUser(
+                    req.app.get('db'),
+                    newUser
+                )
+                    .then(user => {
+                        res
+                            .status(201)
+                            .location(path.posix.join(req.originalUrl, `/${user.userid}`))
+                            .json(UsersService.serializeUser(user))
+                    })
                     })
             })   
-            .catch(next) 
-        
-        UsersService.insertUser(
-            req.app.get('db'),
-            newUser
-        )
-            .then(user => {
-                res
-                    .status(201)
-                    .location(req.originalUrl + `/${user.userid}`)
-                    .json(serializeUser(user))
-            })
             .catch(next)
     })
 

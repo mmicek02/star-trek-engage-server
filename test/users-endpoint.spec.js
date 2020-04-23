@@ -2,7 +2,7 @@ const knex = require('knex');
 const app = require('../src/app');
 const { makeUserArray } = require('./users.fixture');
 
-describe(`User Endpoints`, () => {
+describe.only(`User Endpoints`, () => {
     let db 
 
     const testUsers = makeUserArray();
@@ -16,7 +16,10 @@ describe(`User Endpoints`, () => {
         app.set('db', db)
     })
 
-    after(() => db.destroy())
+    after(async () => {
+        await db('users').whereIn('username', testUsers.map(u => u.username)).del()
+        db.destroy()
+    })
 
     before(() => db.raw('TRUNCATE characters, users RESTART IDENTITY CASCADE'))
 
@@ -82,23 +85,34 @@ describe(`User Endpoints`, () => {
         it(`creates a user and responds 201 with the new user`,()=> {
             const newUser = {
                 username: 'Username',
-                userpassword: 'Password',
+                userpassword: 'Pas$word1',
             }
             return supertest(app)
                 .post('/api/users')
                 .send(newUser)
                 .expect(201)
                 .expect(res => {
-                    expect(res.body.username).to.eql(newUser.username)
-                    expect(res.body.userpassword).to.eql(newUser.userpassword)
                     expect(res.body).to.have.property('userid')
+                    expect(res.body.username).to.eql(newUser.username)
+                    expect(res.body).to.not.have.property('userpassword')
                     expect(res.headers.location).to.eql(`/api/users/${res.body.userid}`)
                 })
-                    .then(res => {
-                        return supertest(app)
-                            .get(`/api/users/${res.body.userid}`)
-                            .expect(res.body)
-                    })
+                .expect(res => 
+                    db
+                        .from('users')
+                        .select('*')
+                        .where({ userid: res.body.userid })
+                        .first()
+                        .then( row => {
+                            expect(row.username).to.eql(newUser.username)
+
+                            return bcrypt.compare(newUser.userpassword, row.userpassword)
+                        })
+                        .then(compareMatch => {
+                            expect(compareMatch).to.be.true
+                        })
+
+                )
         })
 
         const requiredFields = ['username', 'userpassword']
@@ -106,7 +120,7 @@ describe(`User Endpoints`, () => {
         requiredFields.forEach(field => {
             const newUser = {
                 username: 'Username',
-                userpassword: 'Password',
+                userpassword: 'Pas$word1',
         }
 
             it(`responds with 400 and an error message when the '${field}' is missing`, () => {
@@ -176,16 +190,15 @@ describe(`User Endpoints`, () => {
             })
 
             it(`responds 400 'Username already taken' when username isn't unique`, () => {
-                const duplicateUser = {
+                  const duplicateUser = {
                     username: testUser.username,
                     userpassword: '11AAaa!!',
-                }
-                console.log(duplicateUser)
-                return supertest(app)
+                  }
+                  return supertest(app)
                     .post('/api/users')
                     .send(duplicateUser)
                     .expect(400, { error: `Username already taken` })
-            })
+                })
         })
     })
 
