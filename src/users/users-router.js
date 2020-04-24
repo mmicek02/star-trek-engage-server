@@ -48,18 +48,18 @@ userRouter
                 if (hasUserWithUserName)
                     return res.status(400).json({ error: `Username already taken` })
             
-                return UsersService.hashPassword(password)
+                return UsersService.hashPassword(userpassword)
                     .then(hashPassword => {
                         const newUser = {
                             username,
                             userpassword: hashPassword,
                         }
-
+                        console.log(newUser)
                 return UsersService.insertUser(
                     req.app.get('db'),
                     newUser
                 )
-                    .then(user => {
+                    .then(user => { console.log('Test')
                         res
                             .status(201)
                             .location(path.posix.join(req.originalUrl, `/${user.userid}`))
