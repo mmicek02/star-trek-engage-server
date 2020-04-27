@@ -21,9 +21,9 @@ describe.only(`User Endpoints`, () => {
         db.destroy()
     })
 
-    before(() => db.raw('TRUNCATE characters, users RESTART IDENTITY CASCADE'))
+    before(async () => db.raw('TRUNCATE characters, users RESTART IDENTITY CASCADE'))
 
-    beforeEach('insert users', () => {
+    beforeEach('insert users', async () => {
         return db
             .into('users')
             .insert(testUsers)
