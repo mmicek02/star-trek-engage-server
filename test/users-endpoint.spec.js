@@ -2,35 +2,38 @@ const knex = require('knex');
 const app = require('../src/app');
 const { makeUserArray } = require('./users.fixture');
 
-describe.only(`User Endpoints`, () => {
+describe(`User Endpoints`, () => {
     let db 
 
     const testUsers = makeUserArray();
     const testUser = testUsers[0];
     
-    before(() => {
+    before(async () => {
         db = knex({
             client: 'pg',
             connection: process.env.TEST_DATABASE_URL,
         })
         app.set('db', db)
+        
     })
 
     after(async () => {
         //await db('users').whereIn('username', testUsers.map(u => u.username)).del()
-        db.destroy()
+        await db.destroy()
     })
 
-    before(async () => db.raw('TRUNCATE characters, users RESTART IDENTITY CASCADE'))
+    //before(async () => )
 
     beforeEach('insert users', async () => {
-        return db
+        //await db.raw('TRUNCATE characters, users RESTART IDENTITY CASCADE')
+        await db
             .into('users')
             .insert(testUsers)
+        await db.raw("SELECT setval('users_userid_seq', (SELECT MAX(userid) FROM users))");
     })
 
     afterEach(async () => {
-        db.raw('TRUNCATE characters, users RESTART IDENTITY CASCADE')
+        await db.raw('TRUNCATE characters, users RESTART IDENTITY CASCADE')
         await db.raw('DELETE FROM users WHERE 1=1');
     })
 
@@ -91,11 +94,12 @@ describe.only(`User Endpoints`, () => {
     })
 
     describe(`POST /api/users`, () => {
-        it(`creates a user and responds 201 with the new user`,()=> {
+        it(`creates a user and responds 201 with the new user`, async ()=> {
             const newUser = {
-                username: 'Username',
+                username: 'TestUsernameNew',
                 userpassword: 'Pas$word1',
             }
+            
             return supertest(app)
                 .post('/api/users')
                 .send(newUser)
