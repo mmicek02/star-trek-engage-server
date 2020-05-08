@@ -24,6 +24,7 @@ userRouter
             .catch(next) 
     })
     .post(jsonParser, (req, res, next) => {
+        console.log(req.body)
         const { username, userpassword } = req.body;
         const newUser = { username, userpassword: userpassword };
         

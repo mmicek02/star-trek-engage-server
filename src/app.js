@@ -28,9 +28,9 @@ app.get('/', (req, res) => {
 })
 
 app.use(
-    cors({
-        origin: CLIENT_ORIGIN
-    })
+    cors(
+       // origin: CLIENT_ORIGIN
+    )
 );
 
 app.use('/api/characters', characterRouter)
