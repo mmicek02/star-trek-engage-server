@@ -4,11 +4,10 @@
 
 ### Screenshots
 
-<img src ="./Screenshots/CharacterListView.png" alt="Character List View Page" width="400px">
-<img src ="./Screenshots/CharacterDetails.png" alt="Character Details Page" width="400px">
-
-<img src ="./Screenshots/LandingPage.png" alt="Landing Page" width="400px">
-<img src ="./Screenshots/CharacterCreation.png" alt="Character Creation Page" width="400px">
+<img src ="./src/Media/Screenshots/LandingPage.png" alt="Landing Page" width="400px">
+<img src ="./src/Media/Screenshots/CharacterCreation.png" alt="Character Creation Page" width="400px">
+<img src ="./src/Media/Screenshots/CharacterListView.png" alt="Character List View Page" width="400px">
+<img src ="./src/Media/Screenshots/CharacterDetails.png" alt="Character Details Page" width="400px">
 
 ### SUMMARY OF APP
 Star Trek Engage is a web application designed as an aid to to players of the Star Trek tabletop role playing game (TTRPG) character creation process. This app will take the user (player) through each step involved in the process of making their character. Buy using the framework and methods already established in the published rulebook by Modiphius Entertainment, using this app means the process of creating a character with compelling motivations and interesting background is even easier. At the end of the process the user of the app will be able to export their completed character sheet as a PDF, meaning they are 100% ready for the thrilling adventures that awaits them and the rest of their crew!
